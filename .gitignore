@@ -1,0 +1,58 @@
+
+# ==============================
+# CMake build folders
+# ==============================
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/Makefile
+/cmake_install.cmake
+/*.cmake
+
+# ==============================
+# C/C++ compiled output
+# ==============================
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# ==============================
+# Backup / temp files
+# ==============================
+*~
+*.swp
+*.swo
+*.tmp
+
+# ==============================
+# Editor / IDE / LSP
+# ==============================
+# ccls
+/.ccls-cache/
+/ccls-index/
+
+# Vim / Neovim
+*.swp
+*.swo
+*.bak
+*.tmp
+*.undo
+*.session
+*.nvim/
+
+# VSCode
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# ==============================
+# Other
+# ==============================
+tags
+*.log
