@@ -1,0 +1,3 @@
+/home/geronimo/dev/haykal/include/CMakeFiles/haykal.dir
+/home/geronimo/dev/haykal/include/CMakeFiles/edit_cache.dir
+/home/geronimo/dev/haykal/include/CMakeFiles/rebuild_cache.dir
