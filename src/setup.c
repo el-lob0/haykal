@@ -1,7 +1,13 @@
 #include "../include/nib.h"
 #include <GLFW/glfw3.h>
-#define PixelBuffer Pixel*
 
+
+/* 
+
+ iname = index of name
+ pname = pointer to name
+
+ */
 
 
 typedef struct {
@@ -16,19 +22,121 @@ typedef enum {
   ABSOLUTE,
 } Orientation ;
 
+typedef int H_Element; // index of element 
+
+typedef struct {
+    int w;
+    int h;
+} H_Size;
+
+
 // i will identify the widgets by their index 
 typedef struct {
   Pixel **buffer;
+  H_Element **children;
+  int **padding; // array of arrays of paddings, in this order: [left, top, right, bottom] (aka clockwise)
   int *widths;
   int *heights;
-  Orientation mode;
-  int padding;
-  int margin;
+  Orientation *mode;
+  int *taken_width;
+  int *taken_height;
+  H_Element *parents;  // index pointing to a Component's parent
+  int *child_count;
+  int *radius;
+  int *feather;
 } H_Components ;
-// NOTE: I need to malloc at every new addition to the arrays.
+// NOTE: I need to malloc at every new addition to the arrays ehehehehe... (man, i miss rust..)
 
-// for clarity, this is the index of the element, which gets passed as the element itself
-typedef int H_Element; 
+// internal runtime variable so i init it here
+static H_Components components = {0};
+
+
+
+/*   
+ 
+ extract child's requested size.
+ resolve container's size.
+ build a buffer with the container's size, and child inside with transparent pixels around
+ merge this new buffer with the parent buffer 
+ keep doing it...
+
+ Its a tree logic.
+ Turns out doing recursive binary trees with ocaml in uni wasnt useless afterall..
+
+ */
+
+
+void layout(H_Element inode) { 
+
+  // case where its a leaf
+  if (components.child_count[inode] == 0) {
+    int width = components.widths[inode];
+    int height = components.heights[inode];
+    
+    int iparent = components.parents[inode];
+    
+    int parent_w = components.widths[iparent];
+    int parent_h = components.heights[iparent];
+
+    Pixel *child_buffer = nib_init_buffer(parent_w, parent_h);
+
+    if (components.mode[iparent] == VERTICAL) {
+      
+      int taken = components.taken_height[iparent]; // x number of rows from the first row 
+      int col; int row;
+
+      for (row=taken; row<parent_h; row++) {
+        for (col=0; col<parent_w; col++) {
+
+          int ipx_parent = (row * parent_w) + col;
+          int ipx_node = (row-taken)*parent_w + col;
+          child_buffer[ipx_parent] = child_buffer[ipx_node];
+        }
+      }
+    } else {
+      int taken = components.taken_width[iparent]; // x number of rows from the first row 
+      int col; int row; int n = 0;
+      
+      for (row=0; row<parent_h; row++) {
+        for (col=taken; col<parent_w; col++) {
+
+          int ipx_parent = (row * parent_w) + col;
+          int ipx_node = (row)*parent_w + col-taken;
+          child_buffer[ipx_parent] = child_buffer[ipx_node];
+        }
+        n++;
+      }
+    }
+    components.taken_height[iparent] += height;
+    components.taken_width[iparent] += width;
+
+    // and then i do the merging here
+
+
+  } else {
+    int *children = components.children[inode];
+    int i;
+    for (i=0; i<components.child_count[inode]; i++) {
+      layout(components.children[inode][i]);
+    }
+  }
+}
+
+/*
+ 
+ I need a way to 
+
+ */
+
+
+
+
+
+
+
+
+
+
 
 
 H_Window H_new_window(const char *title) {
