@@ -1,5 +1,5 @@
-#include "../include/nib.h"
 #include <GLFW/glfw3.h>
+#include "haykal.h"
 
 
 /* 
@@ -9,25 +9,20 @@
 
  */
 
+//
+// typedef struct {
+//   GLFWwindow *window;
+//   int container;  // an index in H_Elements, poiting to the box 
+//   // inside which the window's layout will be layed out.
+// } H_Window;
+//
+// typedef enum {
+//   HORIZONTAL,
+//   VERTICAL,
+// } Orientation ;
+//
+// typedef int H_Element; // index of element 
 
-typedef struct {
-  GLFWwindow *window;
-  int container;  // an index in H_Elements, poiting to the box 
-  // inside which the window's layout will be layed out.
-} H_Window;
-
-typedef enum {
-  HORIZONTAL,
-  VERTICAL,
-  ABSOLUTE,
-} Orientation ;
-
-typedef int H_Element; // index of element 
-
-typedef struct {
-    int w;
-    int h;
-} H_Size;
 
 
 // i will identify the widgets by their index 
@@ -44,26 +39,15 @@ typedef struct {
   int *child_count;
   int *radius;
   int *feather;
+  Pixel *color;
+  int element_count;
 } H_Components ;
 // NOTE: I need to malloc at every new addition to the arrays ehehehehe... (man, i miss rust..)
 
 // internal runtime variable so i init it here
-static H_Components components = {0};
+static H_Components components = { .element_count = -1, };
 
 
-
-/*   
- 
- extract child's requested size.
- resolve container's size.
- build a buffer with the container's size, and child inside with transparent pixels around
- merge this new buffer with the parent buffer 
- keep doing it...
-
- Its a tree logic.
- Turns out doing recursive binary trees with ocaml in uni wasnt useless afterall..
-
- */
 
 
 void layout(H_Element inode) { 
@@ -109,11 +93,10 @@ void layout(H_Element inode) {
     }
     components.taken_height[iparent] += height;
     components.taken_width[iparent] += width;
-
     // and then i do the merging here
-
-
-  } else {
+ } 
+ // case where its a node
+ else {
     int *children = components.children[inode];
     int i;
     for (i=0; i<components.child_count[inode]; i++) {
@@ -122,75 +105,56 @@ void layout(H_Element inode) {
   }
 }
 
-/*
- 
- I need a way to 
 
- */
-
-
-
-
-
-
-
-
-
-
-
-
-H_Window H_new_window(const char *title) {
-  H_Window window;
-  window.window = nib_init_os_window(title);
-  window.container = -1;
-  return window;
-}
 
 void H_set_window_child(H_Window *pwindow, int container) {
   pwindow->container = container;
 }
 
-/// Returns a bool indicating if the os window is still open. 
-int H_run_main_loop(H_Window window) {
-  // I abstracted it on purpose
-  return nib_window_is_open(window.window);
+
+
+
+// NOTE: OHHHH I NEED TO ALLOCATE
+// 
+// okay good night ill fix this tommorrow
+//
+// (famous last words)
+
+H_Element H_new_box(int width, int height, Pixel color, Orientation orientation, int radius, int feather, int padding[4] ) {
+  int ibox = components.element_count + 1;
+
+  components.buffer[ibox] = nib_rectangle(color, width, height);
+  components.color[ibox] = color;
+  components.mode[ibox] = orientation;
+  components.radius[ibox] = radius;
+  components.feather[ibox] = feather;
+  components.padding[ibox] = padding;
+  
+  // initialized because subject to increments
+  components.taken_width[ibox] = 0; components.taken_height[ibox] = 0;
+  components.child_count[ibox] = 0;
+  components.element_count = ibox;
+
+  H_Element out = ibox;
+  return out;
 }
 
-/// I gotta get better at naming things...
-/// This displays the main buffer and [pauses until events ?]
-int H_show_frame(H_Window *pwindow, H_Components element_list /* if passing the whole thing is too much i have to find another way */) {
-  int i = pwindow->container; // index pointing to the main buffer
-  nib_display_buffer(pwindow->window, element_list.buffer[i], element_list.widths[i], element_list.heights[i]);
-  return 0;
+void H_add_child(H_Element iparent, H_Element ichild) {
+
+  int i = components.child_count[iparent];
+  components.children[iparent][i+1] = ichild;
+  components.parents[ichild] = iparent;
 }
 
-void H_continue_loop() {
-  nib_poll_events();
-}
+void H_set_children(H_Element iparent, H_Element *ichildren) {
 
-void H_pause_loop_until_event() {
-  nib_wait_events();
-}
-
-/// To be used as a signal, probably coupled with a flag
-void H_send_fake_event() {
-  glfwPostEmptyEvent();
-}
-
-/// PRIVATE FUNCTION | This is supposed to draw the final window buffer to be shown
-void H_draw_main_buffer(Pixel *bg_buffer, Pixel **fg_buffers, H_Window window) {
-  int len = sizeof(**fg_buffers)/sizeof(Pixel*);
-  int i;
-  for (i=0; i<len; i++) {
-    // need to exact the layout system before i get into this
+  int i = components.child_count[iparent];
+  components.children[iparent] = ichildren;
+  int s; int c = components.child_count[iparent];
+  for (s=0; s<c; s++) {
+    components.parents[s] = ichildren[s];
   }
 }
-
-
-
-
-
-
 
 
 
