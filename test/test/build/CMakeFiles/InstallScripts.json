@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/geronimo/dev/haykal/test/test/build/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

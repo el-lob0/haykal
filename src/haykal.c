@@ -16,7 +16,7 @@
 H_Window H_new_window(const char *title) {
   H_Window window;
   window.window = nib_init_os_window(title);
-  window.container = -1;
+  window.child = -1;
   return window;
 }
 
@@ -39,10 +39,16 @@ void H_send_fake_event() {
   glfwPostEmptyEvent();
 }
 
+
+void H_wait() {
+  nib_wait_for_buffer();
+}
+
+
 // I gotta get better at naming things...
 /// This displays the main buffer and [pauses until events ?]
 int H_show_frame(H_Window *pwindow) {
-  int i = pwindow->container; // index pointing to the main buffer (which is an element as well)
+  H_Element i = pwindow->child; // index pointing to the main buffer (which is an element as well)
 
   layout(i);
 

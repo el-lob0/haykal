@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/geronimo/dev/haykal/test/test/src/main.c" "CMakeFiles/test.dir/src/main.c.o" "gcc" "CMakeFiles/test.dir/src/main.c.o.d"
+  "/home/geronimo/dev/haykal/test/src/main.c" "CMakeFiles/test.dir/src/main.c.o" "gcc" "CMakeFiles/test.dir/src/main.c.o.d"
   "" "test" "gcc" "CMakeFiles/test.dir/link.d"
   )
 

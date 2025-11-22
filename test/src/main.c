@@ -4,13 +4,15 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <haykal.h>
+#include <stdio.h>
 
 
 int main() {
 
   H_Window window = H_new_window("LeBaron James");
 
-  H_Element box = H_new_box(200, 500, (Pixel){0.0f, 1.0f, 0.2f, 0.0f}, HORIZONTAL, 1, 1, 0);
+  int padding[4] = {0,0,0,0};
+  H_Element box = H_new_box(200, 500, (Pixel){0.0f, 1.0f, 0.2f, 0.0f}, VERTICAL, 1, 1, padding);
 
   H_set_window_child(&window, box);
 

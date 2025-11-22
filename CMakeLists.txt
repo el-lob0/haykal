@@ -33,3 +33,6 @@ target_link_libraries(haykal
     m
     freetype
 )
+
+
+

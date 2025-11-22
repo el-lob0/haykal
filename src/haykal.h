@@ -24,7 +24,7 @@ typedef enum {
 // Describes the main application window and its root container
 typedef struct {
     GLFWwindow *window;
-    H_Element container; // index pointing to the box inside which the layout is laid out.
+    H_Element child; // index pointing to the box inside which the layout is laid out.
 } H_Window;
 
 // Describes the size of an element (used internally)
@@ -42,6 +42,11 @@ typedef struct {
  * @return The initialized H_Window structure.
  */
 H_Window H_new_window(const char *title);
+
+
+
+void H_wait();
+
 
 /**
  * Sets the root container element for the given window.

@@ -1,3 +1,0 @@
-/home/geronimo/dev/haykal/test/test/build/CMakeFiles/test.dir
-/home/geronimo/dev/haykal/test/test/build/CMakeFiles/edit_cache.dir
-/home/geronimo/dev/haykal/test/test/build/CMakeFiles/rebuild_cache.dir

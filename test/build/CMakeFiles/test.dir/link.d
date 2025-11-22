@@ -3,7 +3,7 @@ test: \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o \
   CMakeFiles/test.dir/src/main.c.o \
-  /home/geronimo/dev/haykal/test/test/include/libhaykal.so \
+  /home/geronimo/dev/haykal/test/include/libhaykal.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libglfw.so \
   /usr/lib/libfreetype.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libdl.a \
@@ -54,7 +54,7 @@ test: \
 
 CMakeFiles/test.dir/src/main.c.o:
 
-/home/geronimo/dev/haykal/test/test/include/libhaykal.so:
+/home/geronimo/dev/haykal/test/include/libhaykal.so:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libglfw.so:
 
