@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "stb_ds.h"
 
 
 
@@ -67,10 +67,9 @@ void debug(H_Components tree) {
 
 }
 
-void layout(H_Element inode) { 
+// tree gets folded everytime frame changes. so new window size will be available
+void layout(H_Element inode, int window_w, int window_h) { 
 
-  debug(components);
-  // if (components.radius[inode] >= 0) { printf("layout debug"); fflush(stdout); }
   // case where its a leaf
   if (components.child_count[inode] == 0) {
     int width = components.widths[inode];
@@ -79,24 +78,17 @@ void layout(H_Element inode) {
     int iparent = components.parents[inode];
     
     int parent_w; int parent_h; int taken;
-    if (iparent == -1) {
-    taken = 0;
-    parent_w = 300;
-    parent_h = 300;
-    } else {
-      taken = 1;
-    parent_w = components.widths[iparent];
-    parent_h = components.heights[iparent];
-    }
-
 
     Pixel *child_buffer = nib_init_buffer(parent_w, parent_h);
 
-    if (components.mode[iparent] == VERTICAL) {
-      
-      if (taken ==1) { taken = components.taken_height[iparent]; } // x number of rows from the first row 
+    if (iparent == -1) {
+    // when the parent is -1 that means the current node is a direct child of the window
+      parent_w = window_w;
+      parent_h = window_h;
+
       int col; int row;
 
+      printf("debug"); fflush(stdout);
       printf("debug"); fflush(stdout);
       for (row=taken; row<parent_h; row++) {
         for (col=0; col<parent_w; col++) {
@@ -109,21 +101,47 @@ void layout(H_Element inode) {
         }
       }
     } else {
-      if (taken ==1) { taken = components.taken_width[iparent]; } // x number of cols from the first col 
-      int col; int row; int n = 0;
-      
-      for (row=0; row<parent_h; row++) {
-        for (col=taken; col<parent_w; col++) {
 
-          int ipx_parent = (row * parent_w) + col;
-          int ipx_node = (row)*parent_w + col-taken;
-          child_buffer[ipx_parent] = child_buffer[ipx_node];
+      taken = 1;
+    parent_w = components.widths[iparent];
+    parent_h = components.heights[iparent];
+
+      if (components.mode[iparent] == VERTICAL || iparent == -1) {
+        
+        int col; int row;
+
+        printf("debug"); fflush(stdout);
+        for (row=taken; row<parent_h; row++) {
+          for (col=0; col<parent_w; col++) {
+            printf("debug"); fflush(stdout);
+
+            int ipx_parent = (row * parent_w) + col;
+            int ipx_node = (row-taken)*parent_w + col;
+            if (ipx_node > width*height) { break; }
+            child_buffer[ipx_parent] = components.buffer[inode][ipx_node];
+          }
         }
-        n++;
+      } else {
+        if (taken ==1) { taken = components.taken_width[iparent]; } // x number of cols from the first col 
+        int col; int row; int n = 0;
+        
+        for (row=0; row<parent_h; row++) {
+          for (col=taken; col<parent_w; col++) {
+
+            int ipx_parent = (row * parent_w) + col;
+            int ipx_node = (row)*parent_w + col-taken;
+            child_buffer[ipx_parent] = child_buffer[ipx_node];
+          }
+          n++;
+        }
       }
+
+
     }
-    components.taken_height[iparent] += height;
-    components.taken_width[iparent] += width;
+
+
+
+
     // and then i do the merging here
  } 
  // case where its a node
@@ -131,15 +149,16 @@ void layout(H_Element inode) {
     int *children = components.children[inode];
     int i;
     for (i=0; i<components.child_count[inode]; i++) {
-      layout(components.children[inode][i]);
+      layout(components.children[inode][i], window_w, window_h);
     }
   }
 }
 
 
 
-void H_set_window_child(H_Window *pwindow, H_Element container) {
-  pwindow->child = container;
+void H_set_window_child(H_Window *pwindow, H_Element ichild) {
+  pwindow->child = ichild;
+  components.parents[ichild] = -1;
 }
 
 
@@ -151,74 +170,6 @@ void H_set_window_child(H_Window *pwindow, H_Element container) {
 //
 // (famous last words)
 
-
-
-void box_allocate() {
-    int current_count = components.element_count + 1;
-    int new_size = current_count + 1; 
-
-    Pixel **tmp_buffer;
-    Pixel *tmp_color;
-    Orientation *tmp_mode;
-    int *tmp_int;
-    int **tmp_padding;
-    
-    tmp_buffer = realloc(components.buffer, new_size * sizeof(Pixel*));
-    if (tmp_buffer == NULL) {  return; }
-    components.buffer = tmp_buffer;
-  
-
-    tmp_color = realloc(components.color, new_size * sizeof(Pixel));
-    if (tmp_color == NULL) {  return; }
-    components.color = tmp_color;
-    
-    tmp_mode = realloc(components.mode, new_size * sizeof(Orientation));
-    if (tmp_mode == NULL) { return; }
-    components.mode = tmp_mode;
-    
-    tmp_int = realloc(components.widths, new_size * sizeof(int));
-    if (tmp_int == NULL) {  return; }
-    components.widths = tmp_int;
-    
-    tmp_int = realloc(components.heights, new_size * sizeof(int));
-    if (tmp_int == NULL) {  return; }
-    components.heights = tmp_int;
-    
-    tmp_int = realloc(components.radius, new_size * sizeof(int));
-    if (tmp_int == NULL) {  return; }
-    components.radius = tmp_int;
-    
-    tmp_int = realloc(components.feather, new_size * sizeof(int));
-    if (tmp_int == NULL) { return; }
-    components.feather = tmp_int;
-
-    tmp_int = realloc(components.taken_width, new_size * sizeof(int));
-    if (tmp_int == NULL) {  return; }
-    components.taken_width = tmp_int;
-
-    tmp_int = realloc(components.taken_height, new_size * sizeof(int));
-    if (tmp_int == NULL) { return; }
-    components.taken_height = tmp_int;
-    
-    tmp_int = realloc(components.child_count, new_size * sizeof(int));
-    if (tmp_int == NULL) {  return; }
-    components.child_count = tmp_int;
-
-    tmp_padding = realloc(components.padding, new_size * 4 * sizeof(int*));
-    if (tmp_padding == NULL) {  return; }
-    components.padding = tmp_padding;
- 
-    tmp_int = realloc(components.parents, new_size * sizeof(int*));
-    if (tmp_int == NULL) {  return; }
-    components.parents = tmp_int;   
-
-    // components.padding[current_count] = malloc(4 * sizeof(int));
-    // if (components.padding[current_count] == NULL) {  return; }
-
-    components.element_count = current_count; 
-
-    printf("\n count: %d \n", components.element_count); fflush(stdout);
-}
 
 void haykal_free_elements() {
     for (int i = 0; i <= components.element_count; i++) {
@@ -234,7 +185,6 @@ void haykal_free_elements() {
 
 H_Element H_new_box(int width, int height, Pixel color, Orientation orientation, int radius, int feather, int padding[4] ) {
 
-  box_allocate();
 
   int ibox = components.element_count-1;
 

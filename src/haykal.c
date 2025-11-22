@@ -50,7 +50,7 @@ void H_wait() {
 int H_show_frame(H_Window *pwindow) {
   H_Element i = pwindow->child; // index pointing to the main buffer (which is an element as well)
 
-  layout(i);
+  layout(i, 400, 400);
 
   nib_display_buffer(pwindow->window, components.buffer[i], components.widths[i], components.heights[i]);
   return 0;
