@@ -6,5 +6,5 @@ C_DEFINES =
 
 C_INCLUDES = -I/home/geronimo/dev/haykal/test/include -I/usr/include/freetype2
 
-C_FLAGS = 
+C_FLAGS =  -fsanitize=address -g -O1
 

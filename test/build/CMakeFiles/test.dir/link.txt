@@ -1,1 +1,1 @@
-/usr/bin/cc -Wl,--dependency-file=CMakeFiles/test.dir/link.d CMakeFiles/test.dir/src/main.c.o -o test  -Wl,-rpath,/home/geronimo/dev/haykal/test/include /home/geronimo/dev/haykal/test/include/libhaykal.so -lglfw /usr/lib/libfreetype.so -ldl -lm -lfreetype
+/usr/bin/cc  -fsanitize=address -g -O1  -fsanitize=address -Wl,--dependency-file=CMakeFiles/test.dir/link.d CMakeFiles/test.dir/src/main.c.o -o test  -Wl,-rpath,/home/geronimo/dev/haykal/test/include /home/geronimo/dev/haykal/test/include/libhaykal.so -lglfw /usr/lib/libfreetype.so -ldl -lm -lfreetype

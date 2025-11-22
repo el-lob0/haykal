@@ -3,10 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
-
-
-
 
 
 
@@ -16,21 +14,6 @@
  pname = pointer to name
 
  */
-
-//
-// typedef struct {
-//   GLFWwindow *window;
-//   int container;  // an index in H_Elements, poiting to the box 
-//   // inside which the window's layout will be layed out.
-// } H_Window;
-//
-// typedef enum {
-//   HORIZONTAL,
-//   VERTICAL,
-// } Orientation ;
-//
-// typedef int H_Element; // index of element 
-
 
 
 // i will identify the widgets by their index 
@@ -54,24 +37,31 @@ typedef struct {
 
 // internal runtime variable so i init it here
 static H_Components components = { .element_count = -1, };
-
-
-void debug(H_Components tree) {
-  int i;
-  for (i=0;i<components.element_count;i++) {
-    printf("%d ", components.feather[i]); fflush(stdout);
-    printf("%d ", components.radius[i]); fflush(stdout);
-    printf("%d ", components.heights[i]); fflush(stdout);
-    printf("%d ", components.widths[i]); fflush(stdout);
-  }
-
+void haykal_init_components(int initial_capacity) {
+    
+    arrsetcap(components.buffer, initial_capacity);
+    arrsetcap(components.children, initial_capacity);
+    arrsetcap(components.padding, initial_capacity);
+    arrsetcap(components.widths, initial_capacity);
+    arrsetcap(components.heights, initial_capacity);
+    arrsetcap(components.mode, initial_capacity);
+    arrsetcap(components.taken_width, initial_capacity);
+    arrsetcap(components.taken_height, initial_capacity);
+    arrsetcap(components.parents, initial_capacity);
+    arrsetcap(components.child_count, initial_capacity);
+    arrsetcap(components.radius, initial_capacity);
+    arrsetcap(components.feather, initial_capacity);
+    arrsetcap(components.color, initial_capacity);
+    
+    components.element_count = -1; 
 }
+
 
 // tree gets folded everytime frame changes. so new window size will be available
 void layout(H_Element inode, int window_w, int window_h) { 
 
   // case where its a leaf
-  if (components.child_count[inode] == 0) {
+  if (arrlen(components.children[inode]) == 0) {
     int width = components.widths[inode];
     int height = components.heights[inode];
     
@@ -89,22 +79,21 @@ void layout(H_Element inode, int window_w, int window_h) {
       int col; int row;
 
       printf("debug"); fflush(stdout);
-      printf("debug"); fflush(stdout);
       for (row=taken; row<parent_h; row++) {
         for (col=0; col<parent_w; col++) {
-          printf("debug"); fflush(stdout);
 
           int ipx_parent = (row * parent_w) + col;
           int ipx_node = (row-taken)*parent_w + col;
           if (ipx_node > width*height) { break; }
+          arrsetcap(components.buffer[inode], 64);
           child_buffer[ipx_parent] = components.buffer[inode][ipx_node];
         }
       }
     } else {
 
       taken = 1;
-    parent_w = components.widths[iparent];
-    parent_h = components.heights[iparent];
+      parent_w = components.widths[iparent];
+      parent_h = components.heights[iparent];
 
       if (components.mode[iparent] == VERTICAL || iparent == -1) {
         
@@ -118,6 +107,7 @@ void layout(H_Element inode, int window_w, int window_h) {
             int ipx_parent = (row * parent_w) + col;
             int ipx_node = (row-taken)*parent_w + col;
             if (ipx_node > width*height) { break; }
+            arrsetcap(components.buffer[inode], 64);
             child_buffer[ipx_parent] = components.buffer[inode][ipx_node];
           }
         }
@@ -135,13 +125,7 @@ void layout(H_Element inode, int window_w, int window_h) {
           n++;
         }
       }
-
-
     }
-
-
-
-
     // and then i do the merging here
  } 
  // case where its a node
@@ -154,84 +138,49 @@ void layout(H_Element inode, int window_w, int window_h) {
   }
 }
 
+H_Element H_new_box(int width, int height, Pixel color, Orientation orientation, int radius, int feather, int padding[4] ) {
 
+  H_Element ibox;
+
+  ibox = arrpush(components.heights, height);
+
+  arrpush(components.buffer, nib_rectangle(color, width, height));
+  arrpush(components.color, color);
+  arrpush(components.mode, orientation);
+  arrpush(components.radius, radius);
+  arrpush(components.feather, feather);
+  arrpush(components.widths, width);
+
+  arrsetcap(components.buffer[ibox], width*height);
+
+  arrpush(components.children, NULL);
+
+  int *new_padding = malloc(4 * sizeof(int));
+  if (new_padding) {
+    memcpy(new_padding, padding, 4 * sizeof(int));
+  }
+  arrpush(components.padding, new_padding);
+
+  if (ibox == 0) {
+    arrpush(components.parents, -1);
+  } else {
+    arrpush(components.parents, -2);
+  }
+  // initialized because subject to increments
+  arrpush(components.taken_width, 0); arrpush(components.taken_height, 0);
+
+  return ibox;
+}
+
+void H_add_child(H_Element iparent, H_Element ichild) {
+
+  arrpush(components.children[iparent], ichild);
+  components.parents[ichild] = iparent;
+}
 
 void H_set_window_child(H_Window *pwindow, H_Element ichild) {
   pwindow->child = ichild;
   components.parents[ichild] = -1;
 }
-
-
-
-
-// NOTE: OHHHH I NEED TO ALLOCATE
-// 
-// okay good night ill fix this tommorrow
-//
-// (famous last words)
-
-
-void haykal_free_elements() {
-    for (int i = 0; i <= components.element_count; i++) {
-        // Free the padding array for this specific element
-        free(components.padding[i]); 
-        
-        // Free the buffer data for this specific element (if used)
-        free(components.buffer[i]);
-        
-        // Note: You would also need logic to free the child arrays (components.children[i])
-    }
-}
-
-H_Element H_new_box(int width, int height, Pixel color, Orientation orientation, int radius, int feather, int padding[4] ) {
-
-
-  int ibox = components.element_count-1;
-
-  components.buffer[ibox] = nib_rectangle(color, width, height);
-  components.color[ibox] = color;
-  components.mode[ibox] = orientation;
-  components.radius[ibox] = radius;
-  components.feather[ibox] = feather;
-  components.widths[ibox] = width;
-  components.heights[ibox] = height;
-  if (ibox == 0) {
-    components.parents[ibox] = -1;
-  }
-
-  
-  // initialized because subject to increments
-  components.taken_width[ibox] = 0; components.taken_height[ibox] = 0;
-  components.child_count[ibox] = 0;
-
-  H_Element out = ibox;
-  
-  return out;
-}
-
-void H_add_child(H_Element iparent, H_Element ichild) {
-
-  int i = components.child_count[iparent];
-  components.children[iparent][i+1] = ichild;
-  components.parents[ichild] = iparent;
-}
-
-void H_set_children(H_Element iparent, H_Element *ichildren) {
-
-  int i = components.child_count[iparent];
-  components.children[iparent] = ichildren;
-  int s; int c = components.child_count[iparent];
-  for (s=0; s<c; s++) {
-    components.parents[s] = ichildren[s];
-  }
-}
-
-
-
-
-
-
-
-
 
 
