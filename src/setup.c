@@ -180,16 +180,22 @@ void H_get_visibility(H_Element iElement, int *viz) {
 
 typedef struct {
   Pixel *buffer;
+  int w;
+  int h;
 } Core;
 
-static Core main = {0};
+static Core main = {
+    .buffer = NULL,
+    .w = 500,
+    .h = 500,
+};
 
 
 
 int *H_draw_main_buffer(H_Window pWindow) {
 
   if (main.buffer != NULL) { free(main.buffer); }
-  main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, pWindow.buffer_w, pWindow.buffer_h);
+  main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
   
   return 0;
 }

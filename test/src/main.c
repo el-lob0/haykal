@@ -19,8 +19,9 @@ int main() {
 
   while (H_main_loop_running(window)) {
 
-    H_pause_loop_until_event(); 
     H_show_frame(&window);
+
+    H_pause_loop_until_event(); 
 
   }
 

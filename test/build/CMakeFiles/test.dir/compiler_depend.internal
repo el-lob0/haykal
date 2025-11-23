@@ -11,7 +11,6 @@ CMakeFiles/test.dir/src/main.c.o
  /usr/include/bits/stdint-intn.h
  /usr/include/bits/stdint-least.h
  /usr/include/bits/stdint-uintn.h
- /usr/include/bits/stdio.h
  /usr/include/bits/stdio_lim.h
  /usr/include/bits/time64.h
  /usr/include/bits/timesize.h
@@ -42,12 +41,9 @@ CMakeFiles/test.dir/src/main.c.o
 
 test
  /home/geronimo/dev/haykal/test/include/libhaykal.so
- /usr/lib/libstdc++.so.6
  /usr/lib/Scrt1.o
  /usr/lib/crti.o
  /usr/lib/crtn.o
- /usr/lib/libasan.so
- /usr/lib/libasan_preinit.o
  /usr/lib/libc.so
  /usr/lib/libdl.a
  /usr/lib/libfreetype.so
@@ -55,7 +51,6 @@ test
  /usr/lib/libgcc_s.so.1
  /usr/lib/libglfw.so
  /usr/lib/libm.so
- /usr/lib/libubsan.so
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a

@@ -55,13 +55,10 @@ static int global_h;
 
 void H_update_size( GLFWwindow *window, int w, int h ) {
   
-  global_w = w;
-  global_h = h;
+  main.w = w;
+  main.h = h;
 
-  // this should update the bg buffer
-  components.widths[0] = w;
-  components.heights[0] = h;
-  components.buffer[0] = nib_rectangle(components.color[0], w, h);
+  printf("\n WIDTH: %d,  HEIGHT: %d   ", w, h);fflush(stdout);
 }
 
 // I gotta get better at naming things...
@@ -73,7 +70,7 @@ int H_show_frame(H_Window *pWindow) {
   
   H_draw_main_buffer(*pWindow);
 
-  nib_display_buffer(pWindow->window, main.buffer, pWindow->buffer_w, pWindow->buffer_h);
+  nib_display_buffer(pWindow->window, main.buffer, main.w, main.h);
 
   return 0;
 }
