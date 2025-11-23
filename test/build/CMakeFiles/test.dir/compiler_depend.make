@@ -10,6 +10,7 @@ CMakeFiles/test.dir/src/main.c.o: /home/geronimo/dev/haykal/test/src/main.c \
   /usr/include/bits/stdint-intn.h \
   /usr/include/bits/stdint-least.h \
   /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/stdio.h \
   /usr/include/bits/stdio_lim.h \
   /usr/include/bits/time64.h \
   /usr/include/bits/timesize.h \
@@ -39,9 +40,12 @@ CMakeFiles/test.dir/src/main.c.o: /home/geronimo/dev/haykal/test/src/main.c \
   /usr/local/include/nib.h
 
 test: /home/geronimo/dev/haykal/test/include/libhaykal.so \
+  /usr/lib/libstdc++.so.6 \
   /usr/lib/Scrt1.o \
   /usr/lib/crti.o \
   /usr/lib/crtn.o \
+  /usr/lib/libasan.so \
+  /usr/lib/libasan_preinit.o \
   /usr/lib/libc.so \
   /usr/lib/libdl.a \
   /usr/lib/libfreetype.so \
@@ -49,6 +53,7 @@ test: /home/geronimo/dev/haykal/test/include/libhaykal.so \
   /usr/lib/libgcc_s.so.1 \
   /usr/lib/libglfw.so \
   /usr/lib/libm.so \
+  /usr/lib/libubsan.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a \
@@ -74,8 +79,6 @@ test: /home/geronimo/dev/haykal/test/include/libhaykal.so \
 
 CMakeFiles/test.dir/src/main.c.o:
 
-/usr/lib32/libpng16.so.16:
-
 /usr/lib32/libbrotlidec.so.1:
 
 /usr/lib32/libbz2.so.1.0:
@@ -84,13 +87,11 @@ CMakeFiles/test.dir/src/main.c.o:
 
 /usr/lib/libpng16.so.16:
 
-/usr/include/stdc-predef.h:
+/usr/lib/libmvec.so.1:
 
-/usr/include/bits/timesize.h:
+/usr/lib/libm.so.6:
 
-/usr/lib32/libz.so.1:
-
-/usr/include/sys/cdefs.h:
+/usr/lib/libc.so.6:
 
 /usr/lib32/libbrotlicommon.so.1:
 
@@ -100,9 +101,7 @@ CMakeFiles/test.dir/src/main.c.o:
 
 /usr/include/bits/wordsize.h:
 
-/usr/include/gnu/stubs.h:
-
-/usr/include/features.h:
+/usr/include/bits/stdio.h:
 
 /usr/include/bits/types/struct_FILE.h:
 
@@ -116,7 +115,19 @@ CMakeFiles/test.dir/src/main.c.o:
 
 /usr/lib/libc.so:
 
+/usr/lib/libc_nonshared.a:
+
+/usr/include/bits/types.h:
+
 /usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/timesize.h:
+
+/usr/include/stdc-predef.h:
+
+/usr/lib32/libz.so.1:
+
+/usr/include/sys/cdefs.h:
 
 /usr/include/bits/floatn-common.h:
 
@@ -127,6 +138,12 @@ CMakeFiles/test.dir/src/main.c.o:
 /usr/include/bits/types/cookie_io_functions_t.h:
 
 /usr/include/bits/stdint-uintn.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/lib/libnib.so:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdarg.h:
 
 /usr/include/bits/types/__mbstate_t.h:
 
@@ -164,11 +181,13 @@ CMakeFiles/test.dir/src/main.c.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stddef.h:
 
-/usr/lib/libmvec.so.1:
-
 /home/geronimo/dev/haykal/test/include/libhaykal.so:
 
 /usr/lib/libgcc_s.so:
+
+/usr/lib32/libpng16.so.16:
+
+/usr/lib/libstdc++.so.6:
 
 /usr/lib/Scrt1.o:
 
@@ -178,30 +197,26 @@ CMakeFiles/test.dir/src/main.c.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a:
 
+/usr/lib/libasan.so:
+
+/usr/lib/libasan_preinit.o:
+
+/usr/lib/crti.o:
+
+/usr/lib/libglfw.so:
+
 /usr/lib/libdl.a:
 
 /usr/lib/libfreetype.so:
 
 /usr/lib/libgcc_s.so.1:
 
-/usr/lib/crti.o:
+/usr/include/features.h:
 
-/usr/lib/libglfw.so:
+/usr/lib/libubsan.so:
 
 /usr/lib/ld-linux-x86-64.so.2:
-
-/usr/lib/libm.so.6:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o:
 
 /usr/lib/libbrotlidec.so.1:
-
-/usr/lib/libc.so.6:
-
-/usr/include/bits/types.h:
-
-/usr/lib/libc_nonshared.a:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdarg.h:
-
-/usr/lib/libnib.so:

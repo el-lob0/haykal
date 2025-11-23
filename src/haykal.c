@@ -16,7 +16,8 @@
 H_Window H_new_window(const char *title) {
   H_Window window;
   window.window = nib_init_os_window(title);
-  window.child = -1;
+  init_window_bg(window, (Pixel){1.0f, 0.0f, 0.0f, 1.0f});
+  haykal_init_components(window, 32);
   return window;
 }
 
@@ -44,14 +45,18 @@ void H_wait() {
   nib_wait_for_buffer();
 }
 
+void H_update_size( GLFWwindow *window, int w, int h ) {
+  H_update_bg_size(w, h);
+}
+
 
 // I gotta get better at naming things...
 /// This displays the main buffer and [pauses until events ?]
-int H_show_frame(H_Window *pwindow) {
-  H_Element i = pwindow->child; // index pointing to the main buffer (which is an element as well)
+int H_show_frame(H_Window *pWindow) {
 
-  layout(i, 400, 400);
+  // need to repplace by a function that returns the main buffer
+  H_draw_main_buffer(*pWindow);
 
-  nib_display_buffer(pwindow->window, components.buffer[i], components.widths[i], components.heights[i]);
+  nib_display_buffer(pWindow->window, pWindow->main_buffer, 3000, 3000);
   return 0;
 }
