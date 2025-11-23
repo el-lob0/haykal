@@ -111,12 +111,16 @@ void H_update_bg_size(int w, int h) {
 /// Visibility defaults to 1
 H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y ) {
 
-  H_Element ibox;
-  ibox = arrlen(components.layer);
+  H_Element ibox = arrlen(components.layer);
+
+  push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
+ 
+  components.buffer[ibox] = nib_rectangle(color, width, height); 
+
+  Pixel *tmp_buffer = components.buffer[ibox];
 
   push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
 
-  Pixel *tmp_buffer = nib_rectangle(color, width, height);
 
   // rotation needs padding to avoid clipping
   if (angle > 0) {

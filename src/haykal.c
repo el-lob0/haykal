@@ -18,6 +18,7 @@ H_Window H_new_window(const char *title) {
   window.window = nib_init_os_window(title);
   init_window_bg(window, (Pixel){1.0f, 0.0f, 0.0f, 1.0f});
   haykal_init_components(window, 32);
+  glfwSetWindowUserPointer(window.window, &window);
   return window;
 }
 
@@ -46,7 +47,19 @@ void H_wait() {
 }
 
 void H_update_size( GLFWwindow *window, int w, int h ) {
+  
+  H_Window *pWindow = (H_Window *)glfwGetWindowUserPointer(window);
+
+  if (pWindow->main_buffer != NULL) {
+    free(pWindow->main_buffer);
+  }
+  
+  pWindow->buffer_w = w;
+  pWindow->buffer_h = h;
+
+  // NOTE: the new size of the window is now stored at the first element of widths and heights
   H_update_bg_size(w, h);
+
 }
 
 
@@ -54,9 +67,9 @@ void H_update_size( GLFWwindow *window, int w, int h ) {
 /// This displays the main buffer and [pauses until events ?]
 int H_show_frame(H_Window *pWindow) {
 
-  // need to repplace by a function that returns the main buffer
   H_draw_main_buffer(*pWindow);
 
-  nib_display_buffer(pWindow->window, pWindow->main_buffer, 3000, 3000);
+   // BUG: resize memory leak
+  nib_display_buffer(pWindow->window, pWindow->main_buffer, pWindow->buffer_w, pWindow->buffer_h);
   return 0;
 }
