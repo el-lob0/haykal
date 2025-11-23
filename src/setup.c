@@ -31,12 +31,11 @@ typedef struct {
   int *radius;
   int *feather;
   Pixel *color;
-  int element_count;
 } H_Components ;
 // NOTE: I need to malloc at every new addition to the arrays ehehehehe... (man, i miss rust..)
 
 // internal runtime variable so i init it here
-static H_Components components = { .element_count = -1, };
+static H_Components components = { 0 };
 void haykal_init_components(int initial_capacity) {
     
     arrsetcap(components.buffer, initial_capacity);
@@ -53,97 +52,31 @@ void haykal_init_components(int initial_capacity) {
     arrsetcap(components.feather, initial_capacity);
     arrsetcap(components.color, initial_capacity);
     
-    components.element_count = -1; 
 }
 
 
 // tree gets folded everytime frame changes. so new window size will be available
 void layout(H_Element inode, int window_w, int window_h) { 
-
-  // case where its a leaf
-  if (arrlen(components.children[inode]) == 0) {
-    int width = components.widths[inode];
-    int height = components.heights[inode];
-    
-    int iparent = components.parents[inode];
-    
-    int parent_w; int parent_h; int taken;
-
-    Pixel *child_buffer = nib_init_buffer(parent_w, parent_h);
-
-    if (iparent == -1) {
-    // when the parent is -1 that means the current node is a direct child of the window
-      parent_w = window_w;
-      parent_h = window_h;
-
-      int col; int row;
-
-      printf("debug"); fflush(stdout);
-      for (row=taken; row<parent_h; row++) {
-        for (col=0; col<parent_w; col++) {
-
-          int ipx_parent = (row * parent_w) + col;
-          int ipx_node = (row-taken)*parent_w + col;
-          if (ipx_node > width*height) { break; }
-          arrsetcap(components.buffer[inode], 64);
-          child_buffer[ipx_parent] = components.buffer[inode][ipx_node];
-        }
-      }
-    } else {
-
-      taken = 1;
-      parent_w = components.widths[iparent];
-      parent_h = components.heights[iparent];
-
-      if (components.mode[iparent] == VERTICAL || iparent == -1) {
-        
-        int col; int row;
-
-        printf("debug"); fflush(stdout);
-        for (row=taken; row<parent_h; row++) {
-          for (col=0; col<parent_w; col++) {
-            printf("debug"); fflush(stdout);
-
-            int ipx_parent = (row * parent_w) + col;
-            int ipx_node = (row-taken)*parent_w + col;
-            if (ipx_node > width*height) { break; }
-            arrsetcap(components.buffer[inode], 64);
-            child_buffer[ipx_parent] = components.buffer[inode][ipx_node];
-          }
-        }
-      } else {
-        if (taken ==1) { taken = components.taken_width[iparent]; } // x number of cols from the first col 
-        int col; int row; int n = 0;
-        
-        for (row=0; row<parent_h; row++) {
-          for (col=taken; col<parent_w; col++) {
-
-            int ipx_parent = (row * parent_w) + col;
-            int ipx_node = (row)*parent_w + col-taken;
-            child_buffer[ipx_parent] = child_buffer[ipx_node];
-          }
-          n++;
-        }
-      }
-    }
-    // and then i do the merging here
- } 
- // case where its a node
-  else {
-    int *children = components.children[inode];
-    int i;
-    for (i=0; i<components.child_count[inode]; i++) {
-      layout(components.children[inode][i], window_w, window_h);
-    }
-  }
 }
+
+
+
+
+
+
+
+
+
 
 H_Element H_new_box(int width, int height, Pixel color, Orientation orientation, int radius, int feather, int padding[4] ) {
 
   H_Element ibox;
 
-  ibox = arrpush(components.heights, height);
+  ibox = arrlen(components.heights);
 
+  arrpush(components.heights, height);
+
+  printf("%d", ibox); fflush(stdout);
   arrpush(components.buffer, nib_rectangle(color, width, height));
   arrpush(components.color, color);
   arrpush(components.mode, orientation);
@@ -151,7 +84,7 @@ H_Element H_new_box(int width, int height, Pixel color, Orientation orientation,
   arrpush(components.feather, feather);
   arrpush(components.widths, width);
 
-  arrsetcap(components.buffer[ibox], width*height);
+  // arrsetcap(components.buffer[ibox], width*height);
 
   arrpush(components.children, NULL);
 
