@@ -178,15 +178,21 @@ void H_get_visibility(H_Element iElement, int *viz) {
 
 // NOTE: layer merging function returns a buffer that is stored in window.main_buffer and then shown
 
-void H_draw_main_buffer(H_Window window) {
+typedef struct {
+  Pixel *buffer;
+} Core;
 
-  window.main_buffer = components.buffer[0];
+static Core main = {0};
 
 
-  // return components.buffer[0];
+
+int *H_draw_main_buffer(H_Window pWindow) {
+
+  if (main.buffer != NULL) { free(main.buffer); }
+  main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, pWindow.buffer_w, pWindow.buffer_h);
+  
+  return 0;
 }
-
-
 
 
 
