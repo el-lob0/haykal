@@ -16,7 +16,7 @@ typedef enum {
 
 typedef struct {
     GLFWwindow *window;
-    H_Element child;
+    H_Element origin;
     Pixel *main_buffer; 
     int buffer_w;
     int buffer_h;

@@ -9,5 +9,5 @@ often results in having to use some convoluted techniques in order to implement 
 
 # Concept
   
-Layers, linked layers, layer clipping.  
+Layers, easy relative and absolute positions, layer clipping.  
 
