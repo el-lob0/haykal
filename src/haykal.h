@@ -6,7 +6,7 @@
 
 
 
-#define H_pause_loop_until_event() glfwWaitEvents()
+#define H_pause_loop_until_event() nib_wait_events()
  
 
 typedef int H_Element;
@@ -40,7 +40,7 @@ void H_wait();
 
 void haykal_init_components(H_Window window, int initial_capacity); 
 
-
+void H_pause_until_event();
 
 int H_main_loop_running(H_Window window);
 

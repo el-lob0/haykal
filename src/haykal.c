@@ -48,6 +48,11 @@ void H_wait() {
   nib_wait_for_buffer();
 }
 
+// BUG: Potentially undefined behaviour
+void H_pause_until_event(){
+    nib_wait_events();
+    H_pause_loop_until_event();
+}
 
 void H_update_size( GLFWwindow *window, int w, int h ) {
   

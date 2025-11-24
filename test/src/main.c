@@ -21,8 +21,7 @@ int main() {
 
     H_show_frame(&window);
 
-    nib_wait_events();
-    H_pause_loop_until_event(); 
+    H_pause_until_event();
 
   }
 
