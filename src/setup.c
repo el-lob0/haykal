@@ -130,15 +130,26 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
 
+  Pixel *buf = components.buffer[ibox];
 
-  // rotation needs padding to avoid clipping
+  nib_apply_radius(buf, width, height, radius);
+
+  buf = nib_apply_antialiasing(buf, width, height, feather);
+
   if (angle > 0) {
-    int w = width*2; int h = height*2;
-    nib_add_padding(tmp_buffer, width, height, height/2, width/2, height/2, width/2, (Pixel){0.f, 0.f, 0.f, 0.f}, &w, &h);
+      int w = width * 2;
+      int h = height * 2;
+      buf = nib_add_padding(buf, width, height,
+                            height/2, width/2, height/2, width/2,
+                            (Pixel){0,0,0,0}, &w, &h);
+      width = w;
+      height = h;
   }
-  nib_apply_radius(tmp_buffer, width, height, radius);
-  nib_rotate(tmp_buffer, angle, width, height);
-  nib_apply_antialiasing(tmp_buffer, width, height, feather);
+
+  buf = nib_rotate(buf, angle, width, height);
+
+  // the component buffer becomes a pointer to this buf
+  components.buffer[ibox] = buf;
 
   H_update_layers(layer, ibox);
 
@@ -196,8 +207,8 @@ typedef struct {
 
 static Core main = {
     .buffer = NULL,
-    .w = 500,
-    .h = 500,
+    .w = 2000,
+    .h = 2000,
 };
 
 // NOTE: layer merging function returns a buffer that is stored in window.main_buffer and then shown
@@ -207,9 +218,7 @@ int *H_draw_main_buffer(H_Window pWindow) {
 
   main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
 
-  int i = layers.layers[1][0];
 
-  printf("\n WIDTH: %d  HEIGHT:  %d", main.w, main.h); fflush(stdout);
   
 
   if (main.buffer != NULL) { free(main.buffer); }
@@ -218,14 +227,27 @@ int *H_draw_main_buffer(H_Window pWindow) {
 
   components.buffer[0] = nib_rectangle(components.color[0], main.w, main.h);
 
+  int i = layers.layers[1][0];
+
+  int level;
+  for (level=0; level<arrlen(layers.layers); level++) {
+    int element; int len = arrlen(layers.layers[level]);
+    // ELEMENT here is an index to the column that the ELEMENT belongs to in COMPONENTS
+    for (element=0; element<len; element++) {
+      int i = layers.layers[level][element];
+      nib_merge_buffers(components.buffer[0], components.widths[0], components.heights[0], // lowermost layer
+                        components.buffer[i], components.widths[i], components.heights[i], // next element in the next layer
+                        components.position_x[i], components.position_y[i]); // position to place the element at
+    }                   // the position's origin is BOTTOM LEFT
+  }
+                        // thats how it is with opengl textures
+  
 
 
-  nib_merge_buffers(components.buffer[0], components.widths[0], components.heights[0], components.buffer[i], components.widths[i], components.heights[i], components.position_x[i], components.position_y[i]);
 
   main.buffer = components.buffer[0];
 
 
-  // NOTE: YES I do need to explicitly free any non-null buffer that gets created
   
   return 0;
 }

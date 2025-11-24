@@ -19,9 +19,9 @@ H_Window H_new_window(const char *title) {
   init_window_bg(window, (Pixel){0.0f, 0.9f, 0.9f, 0.0f});
   haykal_init_components(window, 32);
 
-  window.buffer_h = 500; window.buffer_w = 500;
+  window.buffer_h = 2000; window.buffer_w = 2000;
 
-  window.main_buffer = nib_init_buffer(500, 500);
+  window.main_buffer = nib_init_buffer(2000, 2000);
 
   return window;
 }
