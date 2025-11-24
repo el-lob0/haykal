@@ -6,7 +6,7 @@
 
 
 
-#define H_pause_loop_until_event() nib_wait_events()
+#define H_pause_loop_until_event() glfwWaitEvents()
  
 
 typedef int H_Element;

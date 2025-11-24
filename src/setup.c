@@ -128,6 +128,7 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   Pixel *tmp_buffer = components.buffer[ibox];
 
+  push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
 
 
   // rotation needs padding to avoid clipping
@@ -204,16 +205,27 @@ static Core main = {
 
 int *H_draw_main_buffer(H_Window pWindow) {
 
-  printf("\n ELEMENT: %d", layers.layers[1][0]); fflush(stdout);
-
   main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
 
   int i = layers.layers[1][0];
+
+  printf("\n WIDTH: %d  HEIGHT:  %d", main.w, main.h); fflush(stdout);
   
-  nib_merge_buffers(main.buffer, main.w, main.h, components.buffer[i], components.widths[i], components.heights[i], components.position_x[i], components.position_y[i]);
+
+  if (main.buffer != NULL) { free(main.buffer); }
+
+  if (components.buffer[0] != NULL) { free(components.buffer[0]); }
+
+  components.buffer[0] = nib_rectangle(components.color[0], main.w, main.h);
+
+
+
+  nib_merge_buffers(components.buffer[0], components.widths[0], components.heights[0], components.buffer[i], components.widths[i], components.heights[i], components.position_x[i], components.position_y[i]);
+
+  main.buffer = components.buffer[0];
+
 
   // NOTE: YES I do need to explicitly free any non-null buffer that gets created
-  if (main.buffer != NULL) { free(main.buffer); }
   
   return 0;
 }
