@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 
 
+
+#define H_pause_loop_until_event() nib_wait_events()
  
 
 typedef int H_Element;

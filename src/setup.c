@@ -37,8 +37,26 @@ typedef struct {
   Pixel *color;
 } H_Metadata ;
 
+
+
+void H_update_layers(int new_layer, H_Element index) {
+    int current = arrlen(layers.layers);
+
+    if (new_layer >= current) {
+        int missing = new_layer - current + 1;
+
+        for (int i = 0; i < missing; i++) {
+            int *layer = NULL;   // start empty
+            arrpush(layers.layers, layer);
+        }
+    }
+
+    arrpush(layers.layers[new_layer], index);
+}
+
 // internal runtime variable so i init it here
 static H_Metadata components = { 0 };
+
 
 void haykal_init_components(H_Window window, int initial_capacity) {
     // arrsetcap(window.main_buffer, initial_capacity);
@@ -55,16 +73,6 @@ void haykal_init_components(H_Window window, int initial_capacity) {
     arrsetcap(layers.layers, initial_capacity);
 }
 
-void H_update_layers(int new_layer, H_Element index) {
-  if (new_layer > arrlen(layers.layers)) {
-    int layer_add = new_layer - arrlen(layers.layers); int i;
-
-    for (i=0; i<layer_add; i++) {
-      int *layer = NULL;
-      arrpush(layers.layers, layer);
-    }
-  }
-}
 
 void init_window_bg(H_Window window, Pixel color) {
   arrpush(components.color, color);
@@ -104,7 +112,8 @@ void H_update_window_background(Pixel color) {
 void H_update_bg_size(int w, int h) {
   components.widths[0] = w;
   components.heights[0] = h;
-  components.buffer[0] = nib_rectangle(components.color[0], w, h);
+  // NOTE: no activating this until i set up a pointer and freeing for this buffer.
+  // components.buffer[0] = nib_rectangle(components.color[0], w, h);
 }
 
 /// New box is assigned to a layer, given a position and a size.
@@ -119,7 +128,6 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   Pixel *tmp_buffer = components.buffer[ibox];
 
-  push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
 
 
   // rotation needs padding to avoid clipping
@@ -130,6 +138,8 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
   nib_apply_radius(tmp_buffer, width, height, radius);
   nib_rotate(tmp_buffer, angle, width, height);
   nib_apply_antialiasing(tmp_buffer, width, height, feather);
+
+  H_update_layers(layer, ibox);
 
   return ibox;
 }
@@ -176,7 +186,6 @@ void H_get_visibility(H_Element iElement, int *viz) {
 // TODO: check for overlapping buffer on the same layer
 
 
-// NOTE: layer merging function returns a buffer that is stored in window.main_buffer and then shown
 
 typedef struct {
   Pixel *buffer;
@@ -190,12 +199,21 @@ static Core main = {
     .h = 500,
 };
 
+// NOTE: layer merging function returns a buffer that is stored in window.main_buffer and then shown
 
 
 int *H_draw_main_buffer(H_Window pWindow) {
 
-  if (main.buffer != NULL) { free(main.buffer); }
+  printf("\n ELEMENT: %d", layers.layers[1][0]); fflush(stdout);
+
   main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
+
+  int i = layers.layers[1][0];
+  
+  nib_merge_buffers(main.buffer, main.w, main.h, components.buffer[i], components.widths[i], components.heights[i], components.position_x[i], components.position_y[i]);
+
+  // NOTE: YES I do need to explicitly free any non-null buffer that gets created
+  if (main.buffer != NULL) { free(main.buffer); }
   
   return 0;
 }

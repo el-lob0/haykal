@@ -36,9 +36,7 @@ void H_continue_loop() {
   nib_poll_events();
 }
 
-void H_pause_loop_until_event() {
-  nib_wait_events();
-}
+
 
 /// To be used as a signal, probably coupled with a flag
 void H_send_fake_event() {
@@ -50,23 +48,22 @@ void H_wait() {
   nib_wait_for_buffer();
 }
 
-static int global_w;
-static int global_h;
 
 void H_update_size( GLFWwindow *window, int w, int h ) {
   
   main.w = w;
   main.h = h;
+  H_update_bg_size(w, h);
 
-  printf("\n WIDTH: %d,  HEIGHT: %d   ", w, h);fflush(stdout);
 }
 
-// I gotta get better at naming things...
 /// This displays the main buffer and [pauses until events ?]
 int H_show_frame(H_Window *pWindow) {
 
-  pWindow->buffer_w = global_w;
-  pWindow->buffer_h = global_h; 
+
+
+  // pWindow->buffer_w = main.w;
+  // pWindow->buffer_h = main.h; 
   
   H_draw_main_buffer(*pWindow);
 

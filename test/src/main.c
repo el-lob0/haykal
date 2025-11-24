@@ -21,7 +21,10 @@ int main() {
 
     H_show_frame(&window);
 
+    nib_wait_events();
     H_pause_loop_until_event(); 
+
+    // glfwWaitEventsTimeout(20);
 
   }
 
