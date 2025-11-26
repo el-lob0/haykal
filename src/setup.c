@@ -120,8 +120,6 @@ void H_update_bg_size(int w, int h) {
 
 
 
-
-
 Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y)
 {
     int ix = (int)x;
@@ -133,6 +131,56 @@ Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y)
     return buf[iy * w + ix];
 }
 
+void H_apply_radius(Pixel *src, int w, int h, int radius) {
+  if (radius <= 0) { printf("Invalid OR 0 radius"); return; }
+
+  float r = radius/100.0f; // percentage becomes a 0 to 1 float
+
+  float radius_x = (w/2.f) * r;
+  float radius_y = (h/2.f) * r;
+
+  float rx_square = radius_x*radius_x; float ry_square = radius_y*radius_y;
+
+  float cx0 = radius_x, cy0 = radius_y;
+  float cx1 = w-radius_x-1, cy0b = radius_y;
+
+  float cx2 = radius_x, cy2=h-radius_y-1;
+  float cx3 = w-radius_x-1, cy3 = h-radius_y-1;
+
+  int y; int x;
+  for (y=0; y<h; y++) {
+    for (x=0; x<w; x++) {
+      Pixel *px = &src[y*w+x];
+
+      if (x<radius_x && y < radius_y) {
+        float dx = x-cx0;
+        float dy = y-cy0;
+
+        if ((dx*dx)/rx_square + (dy*dy)/ry_square>1.0f) {*px = (Pixel){0.0f,0.0f,0.0f,0.0f};}
+      }
+      if (x>=w-radius_x && y < radius_y) {
+        float dx = x-cx1;
+        float dy = y-cy0b;
+
+        if ((dx*dx)/rx_square + (dy*dy)/ry_square>1.0f) {*px = (Pixel){0.0f,0.0f,0.0f,0.0f};}
+      }
+      if (x<radius_x && y >= h-radius_y) {
+        float dx = x-cx2;
+        float dy = y-cy2;
+
+        if ((dx*dx)/rx_square + (dy*dy)/ry_square>1.0f) {*px = (Pixel){0.0f,0.0f,0.0f,0.0f};}
+      }
+      if (x>=w-radius_x && y >= h-radius_y) {
+        float dx = x-cx3;
+        float dy = y-cy3;
+
+        if ((dx*dx)/rx_square + (dy*dy)/ry_square>1.0f) {*px = (Pixel){0.0f,0.0f,0.0f,0.0f};}
+      }
+    }
+  }
+}
+
+// element id only needed to update its metadata
 Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id)
 {
     float ct = cosf(theta);
@@ -173,7 +221,9 @@ Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id)
     return out;
 }
 
+void H_apply_aa(Pixel *src, int w, int h) {
 
+}
 
 
 /// New box is assigned to a layer, given a position and a size.
@@ -190,7 +240,7 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   Pixel *buf = components.buffer[ibox];
 
-  nib_apply_radius(buf, width, height, radius);
+  H_apply_radius(buf, width, height, radius);
 
   buf = nib_apply_antialiasing(buf, width, height, feather);
 
