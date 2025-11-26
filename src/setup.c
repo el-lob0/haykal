@@ -1,5 +1,6 @@
 #include <GLFW/glfw3.h>
 #include "haykal.h"
+#include "effects.c"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,6 +117,65 @@ void H_update_bg_size(int w, int h) {
   // components.buffer[0] = nib_rectangle(components.color[0], w, h);
 }
 
+
+
+
+
+
+Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y)
+{
+    int ix = (int)x;
+    int iy = (int)y;
+
+    if (ix < 0 || ix >= w || iy < 0 || iy >= h)
+        return (Pixel){0,0,0,0};  
+
+    return buf[iy * w + ix];
+}
+
+Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id)
+{
+    float ct = cosf(theta);
+    float st = sinf(theta);
+
+    int new_w = fabsf(w * ct) + fabsf(h * st);
+    int new_h = fabsf(w * st) + fabsf(h * ct);
+
+    // segfault if not updated
+    components.widths[id] = new_w;
+    components.heights[id] = new_h;
+    
+
+    Pixel *out = nib_init_buffer(new_w, new_h); 
+
+    int cx = new_w / 2;
+    int cy = new_h / 2;
+
+    int ox = w / 2;
+    int oy = h / 2;
+
+    for (int y = 0; y < new_h; y++) {
+        for (int x = 0; x < new_w; x++) {
+
+            float rx = x - cx;
+            float ry = y - cy;
+
+            float sx =  rx * ct + ry * st;
+            float sy = -rx * st + ry * ct;
+
+            sx += ox;
+            sy += oy;
+
+            out[y * new_w + x] = H_sample_nn(src, w, h, sx, sy);
+        }
+    }
+
+    return out;
+}
+
+
+
+
 /// New box is assigned to a layer, given a position and a size.
 /// Visibility defaults to 1
 H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y ) {
@@ -126,9 +186,7 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
  
   components.buffer[ibox] = nib_rectangle(color, width, height); 
 
-  Pixel *tmp_buffer = components.buffer[ibox];
 
-  push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
 
   Pixel *buf = components.buffer[ibox];
 
@@ -136,17 +194,9 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   buf = nib_apply_antialiasing(buf, width, height, feather);
 
-  if (angle > 0) {
-      int w = width * 2;
-      int h = height * 2;
-      buf = nib_add_padding(buf, width, height,
-                            height/2, width/2, height/2, width/2,
-                            (Pixel){0,0,0,0}, &w, &h);
-      width = w;
-      height = h;
-  }
+  float rad = angle * (M_PI / 180.f);
 
-  buf = nib_rotate(buf, angle, width, height);
+  buf = H_rotate_buffer(buf, width, height, rad, ibox);
 
   // the component buffer becomes a pointer to this buf
   components.buffer[ibox] = buf;
@@ -218,12 +268,10 @@ int *H_draw_main_buffer(H_Window pWindow) {
 
   main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
 
-
-  
-
+  // buffer maker functions allocate space for said buffer
   if (main.buffer != NULL) { free(main.buffer); }
-
   if (components.buffer[0] != NULL) { free(components.buffer[0]); }
+
 
   components.buffer[0] = nib_rectangle(components.color[0], main.w, main.h);
 
@@ -241,14 +289,8 @@ int *H_draw_main_buffer(H_Window pWindow) {
     }                   // the position's origin is BOTTOM LEFT
   }
                         // thats how it is with opengl textures
-  
-
-
-
   main.buffer = components.buffer[0];
 
-
-  
   return 0;
 }
 
