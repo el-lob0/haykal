@@ -10,4 +10,17 @@ often results in having to use some convoluted techniques in order to implement 
 # Concept
   
 Layers, easy relative and absolute positions, layer clipping.  
+  
+  
 
+
+  
+I'll my different elements contain some specific metadata. Said metadata decribes its size, relative position, absolute position, style choices...etc  
+These will serve me when I draw the finished product, as I can use it to calculate position and other data.  
+
+  
+
+# TODO (Later)
+- Fix rectangle radius
+- simple anti aliasing
+- 

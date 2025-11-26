@@ -22,6 +22,7 @@ typedef struct {
 
 static H_Layers layers = {0};
 
+
 // widget id is a fixed index 
 typedef struct {
   /// widget's buffer is there for direct modification (1D array)
@@ -35,10 +36,28 @@ typedef struct {
   int *position_y;
   int *layer;
   int *visibilty;
+  Anchor *anchor_pos;
   Pixel *color;
 } H_Metadata ;
 
+typedef enum {
+  HORIZONTAL,
+  VERTICAL,
+} Vector;
 
+typedef int H_Axis;
+
+typedef struct {
+  Vector *vectors;
+  int *master;
+  int *offset_x; int *offset_y;
+  H_Axis **aligned_elements;
+  int *seperator;
+} Axis;
+
+static Axis axis_anchors = { 0 };
+
+static Margin margins = {0};
 
 void H_update_layers(int new_layer, H_Element index) {
     int current = arrlen(layers.layers);
@@ -58,7 +77,6 @@ void H_update_layers(int new_layer, H_Element index) {
 // internal runtime variable so i init it here
 static H_Metadata components = { 0 };
 
-
 void haykal_init_components(H_Window window, int initial_capacity) {
     // arrsetcap(window.main_buffer, initial_capacity);
     arrsetcap(components.buffer, initial_capacity);
@@ -71,9 +89,18 @@ void haykal_init_components(H_Window window, int initial_capacity) {
     arrsetcap(components.angle, initial_capacity);
     arrsetcap(components.layer, initial_capacity);
     arrsetcap(components.color, initial_capacity);
-    arrsetcap(layers.layers, initial_capacity);
-}
+    arrsetcap(components.visibilty, initial_capacity);
+    arrsetcap(components.anchor_pos, initial_capacity);
 
+    arrsetcap(layers.layers, initial_capacity);
+
+    arrsetcap(axis_anchors.master, initial_capacity);
+    arrsetcap(axis_anchors.offset_x, initial_capacity);
+    arrsetcap(axis_anchors.offset_y, initial_capacity);
+    arrsetcap(axis_anchors.vectors, initial_capacity);
+    arrsetcap(axis_anchors.aligned_elements, initial_capacity);
+    arrsetcap(axis_anchors.seperator, initial_capacity);
+}
 
 void init_window_bg(H_Window window, Pixel color) {
   arrpush(components.color, color);
@@ -113,12 +140,30 @@ void H_update_window_background(Pixel color) {
 void H_update_bg_size(int w, int h) {
   components.widths[0] = w;
   components.heights[0] = h;
-  // NOTE: no activating this until i set up a pointer and freeing for this buffer.
   // components.buffer[0] = nib_rectangle(components.color[0], w, h);
 }
 
+// axis also counts as an element so i can tie it to other elements 
+H_Axis create_axis(Vector vec, int master, int offset_x, int offset_y, int sep) {
 
+  arrpush(axis_anchors.vectors, vec);
 
+  arrpush(axis_anchors.seperator, sep);
+  arrpush(axis_anchors.offset_y, offset_y);
+  arrpush(axis_anchors.offset_x, offset_x);
+
+  int *aligned = NULL;
+  arrpush(axis_anchors.aligned_elements, aligned);
+
+  arrpush(axis_anchors.master, master);
+
+  return arrlen(axis_anchors.vectors) - 1;
+}
+
+/// any element tied to another needs to do so through an axis
+void add_to_axis(H_Axis iVec, H_Element iElement) {
+  arrpush(axis_anchors.aligned_elements[iVec], iElement);
+}
 
 Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y)
 {
@@ -221,130 +266,33 @@ Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id)
     return out;
 }
 
-float aa_round(float x, float y, float w, float h, float rx, float ry) {
-  x = fabsf(x) - (w*0.5f-rx);
-  y = fabsf(y) - (w*0.5f-ry);
 
-  float qx = fmaxf(x, 0.0f);
-  float qy = fmaxf(y, 0.0f);
-
-  float ex = qx / rx;
-  float ey = qy / ry;
-  float v = ex*ex + ey*ey - 1.0f;
-  return v;
-}
-
-static const float OFFSET[4][2] = {
-  {0.25f,0.25f}, {0.25f,0.75f}, {0.75f,0.25f}, {0.75f,0.75f},
-};
-
-float coverage_pixel(float px, float py, float w, float h, float rx, float ry) {
-  float cx = w*0.5f;
-  float cy = h*0.5f;
-  
-  float cov = 0.0f;
-
-  for (int i=0; i<4; i++) {
-    float sx = px + OFFSET[i][0];
-    float sy = py + OFFSET[i][1];
-
-    float dx = fabsf(sx -cx)-(w*0.5f-rx);
-    float dy = fabsf(sy -cy)-(w*0.5f-ry);
-
-
-    float qx = fmaxf(dx, 0.0f);
-    float qy = fmaxf(dy, 0.0f);
-
-    float d = (qx/qx + qy/qy);
-
-    float ex = qx/rx;
-    float ey = ey/ry;
-
-    float v = ey*ey +ex*ex;
-  
-    // float d = aa_round(sx-cx, sy-cy, w, h, rx, ry);
-    cov += (v <= 0.0f) ? 1.0f : 0.0f;
-    }
-
-  return cov*0.25f;
-}
-
-void blend_in(Pixel *px, float cov) {
-  px->a *= cov;
-}
-
-void H_apply_aa(Pixel *src, int w, int h, int r) {
-  float rx = (w/2.f) * r;
-  float ry = (h/2.f) * r;
-
-  float fw = (float)w;
-  float fh = (float)h;
-
-  for (int y=0;y<h; y++) {
-    for (int x=0;x<w; x++) {
-      float cov = coverage_pixel((float)x, (float)y, fw, fh, rx, ry);
-      if (cov >= 0.999f) { continue; }
-      if (cov <= 0.001f) {
-        src[y*w + x].a = 0.0f; continue;
-      }
-
-      blend_in(&src[y*w+x], cov);
-    }
-  }
-}
 
 
 void my_aa(Pixel *src, int w, int h) {
 
-  for (int y=0;y<h; y++) {
-    for (int x=0;x<w; x++) {
-      int i = y*w+x;
-      if (
-        !(i<=h 
-        || i>=y*(w)
-        || i == y*w 
-        || i == y*w+h
-        ) && src[i].a != 0.0f
-      ) {
-        src[i].a = 0.5f;
-      }
-      if (
-        (x==1 
-        || x == w-1
-        || y == 1
-        || y == h-1
-        ) && src[i].a != 0.0f
-      ) {
-        src[i].a = 0.75f;
-      }
-      if (
-        (x==2 
-        || x == w-2
-        || y == 2
-        || y == h-2
-        ) && src[i].a != 0.0f
-      ) {
-        src[i].a = 0.875f;
-      }
-    }
-  }
- 
+
+// NOTE: aa not working but ill move on this is decoration 
 }
+
 
 
 
 
 /// New box is assigned to a layer, given a position and a size.
 /// Visibility defaults to 1
-H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y ) {
+H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y, Anchor anchor ) {
 
   H_Element ibox = arrlen(components.layer);
 
   push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
+
+
+  if (components.buffer[ibox] != NULL) { free(components.buffer[ibox]); }
  
   components.buffer[ibox] = nib_rectangle(color, width, height); 
 
-
+  
 
   Pixel *buf = components.buffer[ibox];
 
@@ -352,7 +300,7 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   H_apply_radius(buf, width, height, radius);
 
-  my_aa(buf, width, height);
+  // my_aa(buf, width, height);
 
   float rad = angle * (M_PI / 180.f);
 
@@ -362,6 +310,11 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
   // the component buffer becomes a pointer to this buf
   components.buffer[ibox] = buf;
 
+  arrpush(margins.bottom, 0);
+  arrpush(margins.top, 0);
+  arrpush(margins.right, 0);
+  arrpush(margins.left, 0);
+  
   H_update_layers(layer, ibox);
 
   return ibox;
@@ -373,19 +326,19 @@ void H_set_position(H_Element iElement, int x, int y) {
 }
 
 void H_get_position(H_Element iElement, int *x, int *y) {
-  x = &components.position_x[iElement];
-  y = &components.position_y[iElement];
+  *x = components.position_x[iElement];
+  *y = components.position_y[iElement];
 }
 
 void H_set_dimensions(H_Element iElement, int w, int h) {
-  components.heights[iElement] = w;
-  components.widths[iElement] = h;
+  components.widths[iElement] = w;
+  components.heights[iElement] = h;
   // FIXME: this needs to modify the actual buffer as well
 }
 
 void H_get_dimentions(H_Element iElement, int *w, int *h) {
-  w = &components.widths[iElement];
-  h = &components.heights[iElement];
+  *w = components.widths[iElement];
+  *h = components.heights[iElement];
 }
 
 void H_set_angle(H_Element iElement, int angle) {
@@ -394,7 +347,7 @@ void H_set_angle(H_Element iElement, int angle) {
 }
 
 void H_get_angle(H_Element iElement, int *angle) {
-  angle = &components.angle[iElement];
+  *angle = components.angle[iElement];
 }
 
 void H_set_visibility(H_Element iElement, int viz) {
@@ -402,7 +355,16 @@ void H_set_visibility(H_Element iElement, int viz) {
 }
 
 void H_get_visibility(H_Element iElement, int *viz) {
-  viz = &components.visibilty[iElement];
+  *viz = components.visibilty[iElement];
+}
+
+void H_set_marin(H_Element iElement, int top, int bottom, int right, int left) {
+  if (iElement>arrlen(margins.bottom)) { printf("OUT OF BOUNDS MARGIN"); return; }
+
+  margins.top[iElement] = bottom;
+  margins.bottom[iElement] = bottom;
+  margins.right[iElement] = bottom;
+  margins.left[iElement] = bottom;
 }
 
 
@@ -422,15 +384,54 @@ static Core main = {
     .h = 2000,
 };
 
-// NOTE: layer merging function returns a buffer that is stored in window.main_buffer and then shown
+
+/* 
+ * This function takes nothing
+ *
+ * it iterates over the array of vectors, checks their master's position,
+ * remembers that, and then accordingly sets the followers' absolute positions.
+ *
+ * */
+
+int modify_positions_to_axis() {
+  for (int i = 0; i<arrlen(axis_anchors.master); i++) {
+    int iMaster = axis_anchors.master[i];
+    int mPosx = components.position_x[iMaster];
+    int mPoxy = components.position_y[iMaster];
+
+    // based on orientation, calculate follower positions using seperator that is either through h or w;
+
+  }
+
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 int *H_draw_main_buffer(H_Window pWindow) {
 
-  main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
+  // main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
 
   // buffer maker functions allocate space for said buffer
-  if (main.buffer != NULL) { free(main.buffer); }
+  // if (main.buffer != NULL) { free(main.buffer); }
   if (components.buffer[0] != NULL) { free(components.buffer[0]); }
 
 

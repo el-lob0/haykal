@@ -11,11 +11,6 @@
 
 typedef int H_Element;
 
-typedef enum {
-    HORIZONTAL,
-    VERTICAL,
-} Orientation ;
-
 typedef struct {
     GLFWwindow *window;
     H_Element origin;
@@ -57,8 +52,22 @@ void H_pause_loop_until_event();
 void H_send_fake_event();
 
 
+typedef struct {
+  int *top;
+  int *bottom;
+  int *right;
+  int *left;
+} Margin;
 
-H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y );
+typedef enum {
+  TOP,
+  RIGHT,
+  BOTTOM,
+  LEFT,
+  ABSOLUTE
+} Anchor;
+
+H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y, Anchor anchor );
 
 
 void H_add_child(H_Element iparent, H_Element ichild);
