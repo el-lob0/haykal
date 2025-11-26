@@ -221,9 +221,117 @@ Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id)
     return out;
 }
 
-void H_apply_aa(Pixel *src, int w, int h) {
+float aa_round(float x, float y, float w, float h, float rx, float ry) {
+  x = fabsf(x) - (w*0.5f-rx);
+  y = fabsf(y) - (w*0.5f-ry);
 
+  float qx = fmaxf(x, 0.0f);
+  float qy = fmaxf(y, 0.0f);
+
+  float ex = qx / rx;
+  float ey = qy / ry;
+  float v = ex*ex + ey*ey - 1.0f;
+  return v;
 }
+
+static const float OFFSET[4][2] = {
+  {0.25f,0.25f}, {0.25f,0.75f}, {0.75f,0.25f}, {0.75f,0.75f},
+};
+
+float coverage_pixel(float px, float py, float w, float h, float rx, float ry) {
+  float cx = w*0.5f;
+  float cy = h*0.5f;
+  
+  float cov = 0.0f;
+
+  for (int i=0; i<4; i++) {
+    float sx = px + OFFSET[i][0];
+    float sy = py + OFFSET[i][1];
+
+    float dx = fabsf(sx -cx)-(w*0.5f-rx);
+    float dy = fabsf(sy -cy)-(w*0.5f-ry);
+
+
+    float qx = fmaxf(dx, 0.0f);
+    float qy = fmaxf(dy, 0.0f);
+
+    float d = (qx/qx + qy/qy);
+
+    float ex = qx/rx;
+    float ey = ey/ry;
+
+    float v = ey*ey +ex*ex;
+  
+    // float d = aa_round(sx-cx, sy-cy, w, h, rx, ry);
+    cov += (v <= 0.0f) ? 1.0f : 0.0f;
+    }
+
+  return cov*0.25f;
+}
+
+void blend_in(Pixel *px, float cov) {
+  px->a *= cov;
+}
+
+void H_apply_aa(Pixel *src, int w, int h, int r) {
+  float rx = (w/2.f) * r;
+  float ry = (h/2.f) * r;
+
+  float fw = (float)w;
+  float fh = (float)h;
+
+  for (int y=0;y<h; y++) {
+    for (int x=0;x<w; x++) {
+      float cov = coverage_pixel((float)x, (float)y, fw, fh, rx, ry);
+      if (cov >= 0.999f) { continue; }
+      if (cov <= 0.001f) {
+        src[y*w + x].a = 0.0f; continue;
+      }
+
+      blend_in(&src[y*w+x], cov);
+    }
+  }
+}
+
+
+void my_aa(Pixel *src, int w, int h) {
+
+  for (int y=0;y<h; y++) {
+    for (int x=0;x<w; x++) {
+      int i = y*w+x;
+      if (
+        !(i<=h 
+        || i>=y*(w)
+        || i == y*w 
+        || i == y*w+h
+        ) && src[i].a != 0.0f
+      ) {
+        src[i].a = 0.5f;
+      }
+      if (
+        (x==1 
+        || x == w-1
+        || y == 1
+        || y == h-1
+        ) && src[i].a != 0.0f
+      ) {
+        src[i].a = 0.75f;
+      }
+      if (
+        (x==2 
+        || x == w-2
+        || y == 2
+        || y == h-2
+        ) && src[i].a != 0.0f
+      ) {
+        src[i].a = 0.875f;
+      }
+    }
+  }
+ 
+}
+
+
 
 
 /// New box is assigned to a layer, given a position and a size.
@@ -240,13 +348,16 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   Pixel *buf = components.buffer[ibox];
 
+  components.radius[ibox] = radius;
+
   H_apply_radius(buf, width, height, radius);
 
-  buf = nib_apply_antialiasing(buf, width, height, feather);
+  my_aa(buf, width, height);
 
   float rad = angle * (M_PI / 180.f);
 
   buf = H_rotate_buffer(buf, width, height, rad, ibox);
+
 
   // the component buffer becomes a pointer to this buf
   components.buffer[ibox] = buf;
