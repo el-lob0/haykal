@@ -165,8 +165,7 @@ void add_to_axis(H_Axis iVec, H_Element iElement) {
   arrpush(axis_anchors.aligned_elements[iVec], iElement);
 }
 
-Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y)
-{
+Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y) {
     int ix = (int)x;
     int iy = (int)y;
 
@@ -226,8 +225,7 @@ void H_apply_radius(Pixel *src, int w, int h, int radius) {
 }
 
 // element id only needed to update its metadata
-Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id)
-{
+Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id) {
     float ct = cosf(theta);
     float st = sinf(theta);
 
@@ -399,39 +397,96 @@ int modify_positions_to_axis() {
     int mPosx = components.position_x[iMaster];
     int mPoxy = components.position_y[iMaster];
 
-    // based on orientation, calculate follower positions using seperator that is either through h or w;
+    if (axis_anchors.vectors[i] ==  HORIZONTAL) {
+      int last_reserved_y = 0;
+      for (int f=0; f<arrlen(axis_anchors.aligned_elements[i]); f++) {
 
+        H_Element iElement = axis_anchors.aligned_elements[i][f];
+
+        components.position_x[iElement] = components.position_x[iMaster]+axis_anchors.offset_x[i];
+        components.position_y[iElement] = components.position_y[iMaster]+axis_anchors.offset_y[i] + last_reserved_y;
+
+        last_reserved_y = components.position_y[iElement] + components.heights[iElement] + axis_anchors.seperator[i];
+      }
+    } else {
+      int last_reserved_x = 0;
+      for (int f=0; f<arrlen(axis_anchors.aligned_elements[i]); f++) {
+
+        H_Element iElement = axis_anchors.aligned_elements[i][f];
+
+        components.position_x[iElement] = components.position_x[iMaster]+axis_anchors.offset_x[i];
+        components.position_y[iElement] = components.position_y[iMaster]+axis_anchors.offset_y[i] + last_reserved_x;
+
+        last_reserved_x = components.position_x[iElement] + components.heights[iElement] + axis_anchors.seperator[i];
+      }
+    }
+  }
+  return 0;
+}
+
+int anchor_master() {
+  for (int i = 0; i<arrlen(axis_anchors.master); i++) {
+    int iMaster = axis_anchors.master[i];
+
+    Anchor anchor = components.anchor_pos[iMaster];
+
+    switch (anchor) {
+      
+      case TOP: {
+       // push the element below the window's top border  untill element is fully visible
+        int size_offset = components.heights[iMaster];
+        int window_height = main.h;
+        int window_width = main.w;
+
+        components.position_x[iMaster] = (window_width-components.widths[iMaster])/2; // to center it 
+
+        components.position_y[iMaster] = window_height-size_offset;
+      };
+
+      case BOTTOM: {
+       // push the element *above* the window's *bottom* border  untill element is fully visible
+        int size_offset = components.heights[iMaster];
+        int window_height = main.h;
+        int window_width = main.w;
+
+        components.position_x[iMaster] = (window_width-components.widths[iMaster])/2; // to center it 
+
+        components.position_y[iMaster] = 0; // opengl texture origin is already bottom left, only adjust x position.
+      };
+
+      case RIGHT: {
+       // you know the drill by now
+        int size_offset = components.widths[iMaster];
+        int window_height = main.h;
+        int window_width = main.w;
+
+        components.position_x[iMaster] = window_width-size_offset;  
+
+        components.position_y[iMaster] = (window_height-components.heights[iMaster])/2;
+      };
+
+      case LEFT: {
+        int size_offset = components.widths[iMaster];
+        int window_height = main.h;
+        int window_width = main.w;
+
+        components.position_x[iMaster] = 0;  // opengl texture origin is already bottom left, only adjust x position. 
+
+        components.position_y[iMaster] = (window_height-components.heights[iMaster])/2;
+      };
+
+      default: ; // position is absolute, dont mess with it (kuroko no basket reference)
+    }
   }
 
   return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+int apply_margins() { return 0; }
 
 int *H_draw_main_buffer(H_Window pWindow) {
 
-  // main.buffer = nib_rectangle((Pixel){0.0f, 0.9f, 0.9f, 0.0f}, main.w, main.h);
 
-  // buffer maker functions allocate space for said buffer
-  // if (main.buffer != NULL) { free(main.buffer); }
   if (components.buffer[0] != NULL) { free(components.buffer[0]); }
 
 
