@@ -483,7 +483,23 @@ int anchor_master() {
   return 0;
 }
 
-int apply_margins() { return 0; }
+int apply_margins() { 
+    for (int i = 0; i < arrlen(margins.top); i++) {
+        components.position_x[i] += margins.left[i];
+        components.position_y[i] -= margins.top[i];
+        components.position_x[i] -= margins.right[i];
+        components.position_y[i] += margins.bottom[i];
+    }
+  return 0;
+}
+
+void H_add_margin(H_Element iElement, int top, int bottom, int left, int right) {
+  margins.left[iElement] = left;
+  margins.top[iElement] = top;
+  margins.right[iElement] = right;
+  margins.bottom[iElement] = bottom;
+
+}
 
 int *H_draw_main_buffer(H_Window pWindow) {
 
@@ -494,6 +510,7 @@ int *H_draw_main_buffer(H_Window pWindow) {
   components.buffer[0] = nib_rectangle(components.color[0], main.w, main.h);
 
   anchor_master();
+  apply_margins();
   modify_positions_to_axis();
 
   int level;

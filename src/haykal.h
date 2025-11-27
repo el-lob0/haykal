@@ -24,6 +24,7 @@ typedef struct {
     int h;
 } H_Size;
 
+void H_add_margin(H_Element iElement, int top, int bottom, int left, int right);
 
 #define H_monitor_resize(win, func) nib_read_window_size(win, func)
 
