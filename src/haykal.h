@@ -51,6 +51,16 @@ void H_pause_loop_until_event();
 
 void H_send_fake_event();
 
+typedef int H_Axis;
+
+typedef enum {
+  HORIZONTAL,
+  VERTICAL,
+} Vector;
+
+H_Axis H_create_axis(Vector vec, int master, int offset_x, int offset_y, int sep);
+
+void H_add_to_axis(H_Axis iVec, H_Element iElement);
 
 typedef struct {
   int *top;

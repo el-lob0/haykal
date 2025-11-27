@@ -40,12 +40,6 @@ typedef struct {
   Pixel *color;
 } H_Metadata ;
 
-typedef enum {
-  HORIZONTAL,
-  VERTICAL,
-} Vector;
-
-typedef int H_Axis;
 
 typedef struct {
   Vector *vectors;
@@ -114,10 +108,11 @@ void init_window_bg(H_Window window, Pixel color) {
   arrpush(components.position_y, 0);
   arrpush(components.visibilty, 1);
   arrpush(components.feather, 0);
+  arrpush(components.anchor_pos, ABSOLUTE);
   H_update_layers(0, 0);
 }
 
-void push_metadata(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y, int is_visible ) {
+void push_metadata(int layer, int width, Anchor anchor, int height, Pixel color, int angle, int radius, int feather, int x, int y, int is_visible ) {
   arrpush(components.color, color);
   arrpush(components.layer, layer);
   arrpush(components.buffer, nib_init_buffer(width, height));
@@ -129,6 +124,7 @@ void push_metadata(int layer, int width, int height, Pixel color, int angle, int
   arrpush(components.position_y, y);
   arrpush(components.feather, feather);
   arrpush(components.visibilty, is_visible);
+  arrpush(components.anchor_pos, anchor);
 }
 
 /// The window's layer number 0, its size depends on the window's size
@@ -144,7 +140,7 @@ void H_update_bg_size(int w, int h) {
 }
 
 // axis also counts as an element so i can tie it to other elements 
-H_Axis create_axis(Vector vec, int master, int offset_x, int offset_y, int sep) {
+H_Axis H_create_axis(Vector vec, int master, int offset_x, int offset_y, int sep) {
 
   arrpush(axis_anchors.vectors, vec);
 
@@ -161,7 +157,7 @@ H_Axis create_axis(Vector vec, int master, int offset_x, int offset_y, int sep) 
 }
 
 /// any element tied to another needs to do so through an axis
-void add_to_axis(H_Axis iVec, H_Element iElement) {
+void H_add_to_axis(H_Axis iVec, H_Element iElement) {
   arrpush(axis_anchors.aligned_elements[iVec], iElement);
 }
 
@@ -283,7 +279,7 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   H_Element ibox = arrlen(components.layer);
 
-  push_metadata(layer, width, height, color, angle, radius, feather, x, y, 1);
+  push_metadata(layer, width, anchor, height, color, angle, radius, feather, x, y, 1);
 
 
   if (components.buffer[ibox] != NULL) { free(components.buffer[ibox]); }
@@ -397,7 +393,7 @@ int modify_positions_to_axis() {
     int mPosx = components.position_x[iMaster];
     int mPoxy = components.position_y[iMaster];
 
-    if (axis_anchors.vectors[i] ==  HORIZONTAL) {
+    if (axis_anchors.vectors[i] ==  VERTICAL) {
       int last_reserved_y = 0;
       for (int f=0; f<arrlen(axis_anchors.aligned_elements[i]); f++) {
 
@@ -406,7 +402,7 @@ int modify_positions_to_axis() {
         components.position_x[iElement] = components.position_x[iMaster]+axis_anchors.offset_x[i];
         components.position_y[iElement] = components.position_y[iMaster]+axis_anchors.offset_y[i] + last_reserved_y;
 
-        last_reserved_y = components.position_y[iElement] + components.heights[iElement] + axis_anchors.seperator[i];
+        last_reserved_y += components.heights[iElement] + axis_anchors.seperator[i];
       }
     } else {
       int last_reserved_x = 0;
@@ -414,10 +410,11 @@ int modify_positions_to_axis() {
 
         H_Element iElement = axis_anchors.aligned_elements[i][f];
 
-        components.position_x[iElement] = components.position_x[iMaster]+axis_anchors.offset_x[i];
-        components.position_y[iElement] = components.position_y[iMaster]+axis_anchors.offset_y[i] + last_reserved_x;
+        components.position_x[iElement] = mPosx + axis_anchors.offset_x[i] + last_reserved_x;
 
-        last_reserved_x = components.position_x[iElement] + components.heights[iElement] + axis_anchors.seperator[i];
+        components.position_y[iElement] = mPoxy + axis_anchors.offset_y[i];
+
+        last_reserved_x += components.widths[iElement] + axis_anchors.seperator[i];
       }
     }
   }
@@ -441,6 +438,7 @@ int anchor_master() {
         components.position_x[iMaster] = (window_width-components.widths[iMaster])/2; // to center it 
 
         components.position_y[iMaster] = window_height-size_offset;
+        break;
       };
 
       case BOTTOM: {
@@ -452,6 +450,7 @@ int anchor_master() {
         components.position_x[iMaster] = (window_width-components.widths[iMaster])/2; // to center it 
 
         components.position_y[iMaster] = 0; // opengl texture origin is already bottom left, only adjust x position.
+        break;
       };
 
       case RIGHT: {
@@ -463,6 +462,7 @@ int anchor_master() {
         components.position_x[iMaster] = window_width-size_offset;  
 
         components.position_y[iMaster] = (window_height-components.heights[iMaster])/2;
+        break;
       };
 
       case LEFT: {
@@ -473,6 +473,7 @@ int anchor_master() {
         components.position_x[iMaster] = 0;  // opengl texture origin is already bottom left, only adjust x position. 
 
         components.position_y[iMaster] = (window_height-components.heights[iMaster])/2;
+        break;
       };
 
       default: ; // position is absolute, dont mess with it (kuroko no basket reference)
@@ -492,7 +493,8 @@ int *H_draw_main_buffer(H_Window pWindow) {
 
   components.buffer[0] = nib_rectangle(components.color[0], main.w, main.h);
 
-  int i = layers.layers[1][0];
+  anchor_master();
+  modify_positions_to_axis();
 
   int level;
   for (level=0; level<arrlen(layers.layers); level++) {
