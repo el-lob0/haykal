@@ -6,6 +6,7 @@
 #include <string.h>
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
+#include "util.c"
 
 
 
@@ -22,6 +23,14 @@ typedef struct {
 
 static H_Layers layers = {0};
 
+static FT_Library ft_lib;
+static FT_Face default_font;
+
+void H_text_init() {
+    FT_Init_FreeType(&ft_lib);
+    FT_New_Face(ft_lib, "newfont.ttf", 0, &default_font);
+    FT_Set_Pixel_Sizes(default_font, 0, 32);
+}
 
 // widget id is a fixed index 
 typedef struct {
@@ -313,6 +322,16 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   return ibox;
 }
+
+H_Element H_new_label(const char *text, int x, int y, Anchor anchor) {
+    TextBitmap t = render_text(default_font, text, 100);
+
+    H_Element e = H_new_box(5, t.width, t.height, (Pixel){0.0f, 0.0f, 0.0f, 0.0f}, 0, 0, 0, x, y, anchor);
+    components.buffer[e]  = t.buffer;
+
+    return e;
+}
+
 
 void H_set_position(H_Element iElement, int x, int y) {
   components.position_x[iElement] = x;

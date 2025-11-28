@@ -81,10 +81,6 @@ typedef enum {
 H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y, Anchor anchor );
 
 
-void H_add_child(H_Element iparent, H_Element ichild);
-
-
-void H_set_children(H_Element iparent, H_Element *ichildren);
-
+H_Element H_new_label(const char *text, int x, int y, Anchor anchor);
 
 #endif 
