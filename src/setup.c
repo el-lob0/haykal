@@ -6,7 +6,7 @@
 #include <string.h>
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
-#include "util.c"
+#include "Htext.h"
 
 
 
@@ -22,15 +22,6 @@ typedef struct {
 } H_Layers ;
 
 static H_Layers layers = {0};
-
-static FT_Library ft_lib;
-static FT_Face default_font;
-
-void H_text_init() {
-    FT_Init_FreeType(&ft_lib);
-    FT_New_Face(ft_lib, "newfont.ttf", 0, &default_font);
-    FT_Set_Pixel_Sizes(default_font, 0, 32);
-}
 
 // widget id is a fixed index 
 typedef struct {
@@ -49,6 +40,9 @@ typedef struct {
   Pixel *color;
 } H_Metadata ;
 
+typedef struct {
+  char **paths;
+} FontPaths;
 
 typedef struct {
   Vector *vectors;
@@ -61,6 +55,8 @@ typedef struct {
 static Axis axis_anchors = { 0 };
 
 static Margin margins = {0};
+
+static FontPaths fpaths = {0};
 
 void H_update_layers(int new_layer, H_Element index) {
     int current = arrlen(layers.layers);
@@ -103,6 +99,8 @@ void haykal_init_components(H_Window window, int initial_capacity) {
     arrsetcap(axis_anchors.vectors, initial_capacity);
     arrsetcap(axis_anchors.aligned_elements, initial_capacity);
     arrsetcap(axis_anchors.seperator, initial_capacity);
+
+    arrsetcap(fpaths.paths, initial_capacity);
 }
 
 void init_window_bg(H_Window window, Pixel color) {
@@ -273,8 +271,6 @@ Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id) {
 
 
 void my_aa(Pixel *src, int w, int h) {
-
-
 // NOTE: aa not working but ill move on this is decoration 
 }
 
@@ -323,13 +319,42 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
   return ibox;
 }
 
-H_Element H_new_label(const char *text, int x, int y, Anchor anchor) {
-    TextBitmap t = render_text(default_font, text, 100);
+static Font *fonts;
+static Atlas *atlas;
 
-    H_Element e = H_new_box(5, t.width, t.height, (Pixel){0.0f, 0.0f, 0.0f, 0.0f}, 0, 0, 0, x, y, anchor);
-    components.buffer[e]  = t.buffer;
 
-    return e;
+H_Font H_add_font(const char *path, int px) {
+  H_Font i = arrlen(fonts);
+  
+  Font new_font = {0};
+  Atlas new_atlas = {0};
+  if (Hfont_init(&new_font, path, px)) {
+    new_atlas = Hbuild_atlas(&new_font);
+  }
+  arrpush(fonts, new_font);
+  arrpush(atlas, new_atlas);
+
+  return i;
+}
+
+
+H_Element H_new_label(int layer, const char *text, int x, int y, int width, int height, Pixel color, int size, H_Font iFont) {
+  H_Element ibox = arrlen(components.layer);
+
+  push_metadata(layer, width, ABSOLUTE, height, color, 0, 0, 0, x, y, 1);
+
+  Pixel *buffer_view = nib_init_buffer(width, height);
+
+  // draws text to buffer
+  Hrender_text(&atlas[iFont], text, buffer_view, width, height, color, size);
+
+
+
+  components.buffer[ibox] = buffer_view;
+
+  H_update_layers(layer, ibox);
+
+  return ibox;
 }
 
 

@@ -80,7 +80,11 @@ typedef enum {
 
 H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y, Anchor anchor );
 
+typedef int H_Font;
 
-H_Element H_new_label(const char *text, int x, int y, Anchor anchor);
+H_Font H_add_font(const char *path, int px);
+
+H_Element H_new_label(int layer, const char *text, int x, int y, int width, int height, Pixel color, int size, H_Font iFont);
+
 
 #endif 
