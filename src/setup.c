@@ -7,7 +7,7 @@
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 #include "Htext.h"
-
+#include <stdbool.h>
 
 
 /* 
@@ -35,7 +35,7 @@ typedef struct {
   int *position_x;
   int *position_y;
   int *layer;
-  int *visibilty;
+  bool *visibilty;
   Anchor *anchor_pos;
   Pixel *color;
 } H_Metadata ;
@@ -267,11 +267,13 @@ Pixel *H_rotate_buffer(Pixel *src, int w, int h, float theta, H_Element id) {
     return out;
 }
 
-
+// not void
+void H_add_border(Pixel *src, int w, int h, int border) {
+  // TODO: add border to metadata and push_metadata
+}
 
 
 void my_aa(Pixel *src, int w, int h) {
-// NOTE: aa not working but ill move on this is decoration 
 }
 
 
@@ -424,7 +426,11 @@ void H_set_marin(H_Element iElement, int top, int bottom, int right, int left) {
   margins.left[iElement] = left;
 }
 
-
+// for no this just edits the metadata
+void H_set_alpha(H_Element iElement, int alpha) {
+  float new = (float)alpha/100;
+  components.color[iElement].a = new;
+}
 
 typedef struct {
   Pixel *buffer;
@@ -584,6 +590,58 @@ void H_add_margin(H_Element iElement, int top, int bottom, int left, int right) 
 
 }
 
+
+
+// EVENTS
+
+typedef struct {
+  double cursor_x;
+  double cursor_y;
+
+  // other stuff
+} Events;
+
+static Events event_box = {0};
+
+void cursor_callback( GLFWwindow *window, double x, double y) {
+  event_box.cursor_x = x;
+  event_box.cursor_y = y;
+}
+
+void H_get_cursor_pos(int *x, int *y) {
+  *x = (int)event_box.cursor_x;
+  *y = (int)event_box.cursor_y;
+}
+
+bool H_cursor_is_hover(H_Element iElement, H_Window window) {
+  // range of the element to be hovered
+  int x_start, x_end;
+  int y_start, y_end;
+
+  x_start = components.position_x[iElement]; y_start = components.position_y[iElement];
+  x_end = components.position_x[iElement] + components.widths[iElement];
+  y_end = components.position_y[iElement] + components.heights[iElement];
+
+  nib_set_cursor_position_callback(window.window, cursor_callback)
+
+  if (x_start <= event_box.cursor_x 
+      && event_box.cursor_x <= x_end 
+      && y_start <= event_box.cursor_y
+      && event_box.cursor_y <= y_end) 
+  {
+    return true;
+  }
+  else { return false; }
+}
+
+
+
+
+
+
+
+// MAIN
+
 int *H_draw_main_buffer(H_Window pWindow) {
 
 
@@ -602,6 +660,9 @@ int *H_draw_main_buffer(H_Window pWindow) {
     // ELEMENT here is an index to the column that the ELEMENT belongs to in COMPONENTS
     for (element=0; element<len; element++) {
       int i = layers.layers[level][element];
+
+      if (components.visibilty[i] == false) { continue; }
+
       nib_merge_buffers(components.buffer[0], components.widths[0], components.heights[0], // lowermost layer
                         components.buffer[i], components.widths[i], components.heights[i], // next element in the next layer
                         components.position_x[i], components.position_y[i]); // position to place the element at
