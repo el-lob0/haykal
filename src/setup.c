@@ -337,7 +337,7 @@ H_Font H_add_font(const char *path, int px) {
   return i;
 }
 
-
+// currently based on the size of the 
 char *insert_linewrap(const char *unparsed, int char_width, int max_width) {
   int current_width = 0;
   char *target=NULL;
@@ -425,6 +425,7 @@ void H_set_marin(H_Element iElement, int top, int bottom, int right, int left) {
 }
 
 
+
 typedef struct {
   Pixel *buffer;
   int w;
@@ -437,6 +438,15 @@ static Core main = {
     .h = 2000,
 };
 
+void H_set_window_size(int width, int height) {
+  main.w = width;
+  main.h = height;
+}
+
+void H_get_window_size(int *width, int *height) {
+  *width = main.w;
+  *height = main.h;
+}
 
 /* 
  * This function takes nothing
