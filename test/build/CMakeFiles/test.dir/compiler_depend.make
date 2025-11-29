@@ -34,6 +34,7 @@ CMakeFiles/test.dir/src/main.c.o: /home/geronimo/dev/haykal/test/src/main.c \
   /usr/include/stdio.h \
   /usr/include/sys/cdefs.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdarg.h \
+  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdbool.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stddef.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdint.h \
   /usr/local/include/nib.h
@@ -102,6 +103,10 @@ CMakeFiles/test.dir/src/main.c.o:
 
 /usr/include/gnu/stubs.h:
 
+/usr/lib/libnib.so:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdarg.h:
+
 /usr/include/features.h:
 
 /usr/include/bits/types/struct_FILE.h:
@@ -121,6 +126,8 @@ CMakeFiles/test.dir/src/main.c.o:
 /usr/include/bits/floatn-common.h:
 
 /usr/include/bits/long-double.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdbool.h:
 
 /home/geronimo/dev/haykal/test/src/main.c:
 
@@ -201,7 +208,3 @@ CMakeFiles/test.dir/src/main.c.o:
 /usr/include/bits/types.h:
 
 /usr/lib/libc_nonshared.a:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdarg.h:
-
-/usr/lib/libnib.so:

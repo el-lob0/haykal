@@ -136,8 +136,8 @@ void push_metadata(int layer, int width, Anchor anchor, int height, Pixel color,
 
 /// The window's layer number 0, its size depends on the window's size
 /// Defaults to gray
-void H_update_window_background(Pixel color) {
-  components.color[0] = color;
+void H_update_window_background(H_Color color) {
+  components.color[0] = (Pixel)color;
 }
 
 void H_update_bg_size(int w, int h) {
@@ -594,15 +594,43 @@ void H_add_margin(H_Element iElement, int top, int bottom, int left, int right) 
 
 // EVENTS
 
+
+typedef enum {
+  PRESSED,
+  HELD,
+  RELEASED
+} KeyState;
+
 typedef struct {
   double cursor_x;
   double cursor_y;
+  MouseEvent mouse_click;
+  double scroll_offset_x;
+  double scroll_offset_y;
+  int key;
+  KeyState key_state;
 
-  // other stuff
 } Events;
 
 static Events event_box = {0};
 
+// MOUSE CLICK
+void mouse_callback(GLFWwindow *window, int button, int action, int mods) {
+  if (action == GLFW_PRESS) {
+    switch (button) {
+      case GLFW_MOUSE_BUTTON_LEFT: {event_box.mouse_click = LEFT_CLICK; break;}
+      case GLFW_MOUSE_BUTTON_RIGHT: {event_box.mouse_click = RIGHT_CLICK; break;}
+      case GLFW_MOUSE_BUTTON_MIDDLE: {event_box.mouse_click = WHEEL_CLICK; break;}
+    }
+  }
+}
+
+MouseEvent H_mouse_click_event(H_Window window) {
+  nib_set_mouse_click_callback(window.window, mouse_callback);
+  return event_box.mouse_click;
+}
+
+// CURSOR POSITION
 void cursor_callback( GLFWwindow *window, double x, double y) {
   event_box.cursor_x = x;
   event_box.cursor_y = y;
@@ -622,9 +650,6 @@ bool H_cursor_is_hover(H_Element iElement, H_Window window) {
   x_end = components.position_x[iElement] + components.widths[iElement];
   y_end = components.position_y[iElement] + components.heights[iElement];
 
-  // TODO: all callback setters should be moved to init function
-  nib_set_cursor_position_callback(window.window, cursor_callback);
-
   if (x_start <= event_box.cursor_x 
       && event_box.cursor_x <= x_end 
       && y_start <= event_box.cursor_y
@@ -635,26 +660,77 @@ bool H_cursor_is_hover(H_Element iElement, H_Window window) {
   else { return false; }
 }
 
-typedef enum {
-  LEFT_CLICK,
-  RIGTH_CLICK,
-  WHEEL_CLICK,
-  WHEEL_SCROLL
-} MouseEvent;
+// SCROLL
 
-void mouse_callback(GLFWwindow *window, int button, int action, int mods) {
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+  event_box.scroll_offset_x = xoffset;
+  event_box.scroll_offset_y = yoffset;
+} 
 
-}
-
-MouseEvent H_mouse_click_event(H_Window window) {
-  nib_set_mouse_click_callback(window.window, mouse_callback);
+void H_get_scroll_event(H_Window window, int *xoffset, int *yoffset) {
+  *xoffset = event_box.scroll_offset_x;
+  *yoffset = event_box.scroll_offset_y;
 }
 
 
+// KEYBOARD
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  switch (action) {
+    case GLFW_PRESS: {event_box.key = key; event_box.key_state = PRESSED; break; };
+    case GLFW_RELEASE: {event_box.key = key; event_box.key_state = RELEASED; break; };
+    case GLFW_REPEAT: {event_box.key = key; event_box.key_state = HELD; break; };
+  }
+}
+
+bool H_key_press_event(GLFWwindow* window) {
+  if (event_box.key_state == PRESSED) { return true; }
+  return false;
+}
+
+bool H_key_release_event(GLFWwindow* window) {
+  if (event_box.key_state == RELEASED) { return true; }
+  return false;
+}
+
+bool H_key_hold_event(GLFWwindow* window) {
+  if (event_box.key_state == HELD) { return true; }
+  return false;
+}
+
+int H_get_key() {
+  return event_box.key;
+}
 
 
+// TODO: EVENTS: clipboard input, path drop input, time input.
+
+// COLORS
 
 
+H_Color H_new_color(const char *hex) {
+    H_Color color = {0.5f, 0.0f, 0.0f, 1.0f}; // default is opaque reddish
+
+    if (!hex || hex[0] != '#') return color;
+
+    size_t len = strlen(hex);
+    unsigned int r = 0, g = 0, b = 0, a = 255;
+
+    if (len == 7) { // #RRGGBB
+        sscanf(hex + 1, "%02x%02x%02x", &r, &g, &b);
+    } else if (len == 9) { // #RRGGBBAA
+        sscanf(hex + 1, "%02x%02x%02x%02x", &r, &g, &b, &a);
+    }
+
+    color.r = r / 255.0f;
+    color.g = g / 255.0f;
+    color.b = b / 255.0f;
+    color.a = a / 255.0f;
+
+    return color;
+}
+
+// ------------------------------------------------------------
 // MAIN
 
 int *H_draw_main_buffer(H_Window pWindow) {

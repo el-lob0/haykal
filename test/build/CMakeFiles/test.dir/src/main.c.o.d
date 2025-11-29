@@ -12,7 +12,9 @@ CMakeFiles/test.dir/src/main.c.o: \
  /usr/include/bits/time64.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
  /usr/include/bits/stdint-least.h /usr/include/haykal.h \
- /usr/local/include/nib.h /usr/include/stdio.h \
+ /usr/local/include/nib.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdbool.h \
+ /usr/include/stdio.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdarg.h \
  /usr/include/bits/types/__fpos_t.h /usr/include/bits/types/__mbstate_t.h \
  /usr/include/bits/types/__fpos64_t.h /usr/include/bits/types/__FILE.h \
