@@ -622,7 +622,8 @@ bool H_cursor_is_hover(H_Element iElement, H_Window window) {
   x_end = components.position_x[iElement] + components.widths[iElement];
   y_end = components.position_y[iElement] + components.heights[iElement];
 
-  nib_set_cursor_position_callback(window.window, cursor_callback)
+  // TODO: all callback setters should be moved to init function
+  nib_set_cursor_position_callback(window.window, cursor_callback);
 
   if (x_start <= event_box.cursor_x 
       && event_box.cursor_x <= x_end 
@@ -634,6 +635,20 @@ bool H_cursor_is_hover(H_Element iElement, H_Window window) {
   else { return false; }
 }
 
+typedef enum {
+  LEFT_CLICK,
+  RIGTH_CLICK,
+  WHEEL_CLICK,
+  WHEEL_SCROLL
+} MouseEvent;
+
+void mouse_callback(GLFWwindow *window, int button, int action, int mods) {
+
+}
+
+MouseEvent H_mouse_click_event(H_Window window) {
+  nib_set_mouse_click_callback(window.window, mouse_callback);
+}
 
 
 

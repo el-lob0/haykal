@@ -55,6 +55,10 @@ int main() {
 
   while (H_main_loop_running(window)) {
 
+    int x, y;
+    
+    // TODO: need to add the new api functions to header file 
+
     H_show_frame(&window);
 
     nib_poll_events();
