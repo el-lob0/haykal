@@ -176,16 +176,17 @@ void flip_atlas(Atlas *atlas) {
 
 void Hrender_text(Atlas *atlas, const char *text, Pixel *buffer, int buffer_w, int buffer_h, Pixel color, int font_size) {
     flip_atlas(atlas);
-    int x = 0, y = 0;
+    int x = 0, y = buffer_h-font_size;
 
     int baseline = 0;
     for (int i = 32; i < 127; i++) {
         baseline = max(baseline, atlas->glyphs[i].bearing_y);
     }
 
+    int i=0;
     for (const char *byte = text; *byte; byte++) {
     
-        if (*byte == '\n') { x = 0; y += font_size; continue; }
+        if (*byte == '\n') { x = 0; y -= font_size; continue; }
 
         Glyph *g = &atlas->glyphs[(unsigned char)*byte];
 
@@ -193,7 +194,7 @@ void Hrender_text(Atlas *atlas, const char *text, Pixel *buffer, int buffer_w, i
 
             for (int gx = 0; gx < g->width; gx++) {
                 int dst_x = x + gx + g->bearing_x;
-                int dst_y = y + gy + (atlas->glyphs['A'].bearing_y - g->bearing_y); // align baseline
+                int dst_y = y + gy + (g->bearing_y - g->height); // alignement is origin + row + bearing (from origin to top) - bitmap height
                 if (dst_x < 0 || dst_x >= buffer_w || dst_y < 0 || dst_y >= buffer_h) continue;
 
                 float a = atlas->alpha[(g->atlas_y + gy) * atlas->atlas_w + (g->atlas_x + gx)] / 255.0f;
@@ -205,36 +206,10 @@ void Hrender_text(Atlas *atlas, const char *text, Pixel *buffer, int buffer_w, i
             }
         }
 
+        i++;
         x += g->advance;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

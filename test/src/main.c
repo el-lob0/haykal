@@ -11,6 +11,8 @@ int main() {
 
   H_Window window = H_new_window("LeBaron James");
 
+  
+
   H_Element box1 = H_new_box(1, 900, 100, (Pixel){1.0f, 0.0f, 0.0f, 1.0f}, 0 , 10 , 1, 0, 0, TOP);
 
 
@@ -25,11 +27,18 @@ int main() {
 
   H_Element box5 = H_new_box(2, 100, 100, (Pixel){1.0f, 0.0f, 1.0f, 1.0f}, 0 , 0, 1, 400, 400, ABSOLUTE);
 
-  H_Font newfont = H_add_font("/usr/share/fonts/newfont.ttf", 64);
 
-  H_Element label = H_new_label(3, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 100, 100, 500, 500, (Pixel){0.0f, 0.0f, 0.0f, 1.0f}, 64, newfont);
 
- 
+  H_Font newfont64 = H_add_font("/usr/share/fonts/newfont.ttf", 64);
+  H_Font newfont24 = H_add_font("/usr/share/fonts/newfont.ttf", 24);
+
+
+
+  H_Element label = H_new_label(3, "test HH\nabcdefgh\nmnopqrstuvw\nxyzABCDEF\nGHIJKLMNO\nPQRSTUVWXYZ", 100, 100, 800, 700, (Pixel){0.0f, 0.0f, 0.0f, 1.0f}, 24, newfont24);
+
+
+  H_Element label2 = H_new_label(3, "HAYKAL IS working lezgooo", 100, 100, 800, 400, (Pixel){0.0f, 0.0f, 0.0f, 1.0f}, 64, newfont64);
+
 
   H_Axis axis_the_first = H_create_axis(HORIZONTAL, box1, 0, 0, 50);
 
@@ -38,9 +47,6 @@ int main() {
   H_add_margin(box1, 5, 0, 0, 0); 
 
   H_add_to_axis(axis_the_first, box2);
-  // H_add_to_axis(axis_the_first, box3);
-  // H_add_to_axis(axis_the_first, box4);
-  // H_add_to_axis(axis_the_first, box5);
 
 
 
@@ -51,7 +57,7 @@ int main() {
 
     H_show_frame(&window);
 
-    H_pause_until_event();
+    nib_poll_events();
 
   }
 

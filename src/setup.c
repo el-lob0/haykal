@@ -338,6 +338,24 @@ H_Font H_add_font(const char *path, int px) {
 }
 
 
+char *insert_linewrap(const char *unparsed, int char_width, int max_width) {
+  int current_width = 0;
+  char *target=NULL;
+
+  for (int i=0; unparsed[i] != '\0'; i++) {
+
+    if (current_width+char_width>max_width || current_width+2>max_width) {
+      arrpush(target, '\n');
+      current_width = 0;
+    } 
+    arrpush(target, unparsed[i]);
+    current_width += char_width;
+  }
+  arrpush(target, '\0');
+  return target;
+}
+
+
 H_Element H_new_label(int layer, const char *text, int x, int y, int width, int height, Pixel color, int size, H_Font iFont) {
   H_Element ibox = arrlen(components.layer);
 
@@ -345,8 +363,9 @@ H_Element H_new_label(int layer, const char *text, int x, int y, int width, int 
 
   Pixel *buffer_view = nib_init_buffer(width, height);
 
+
   // draws text to buffer
-  Hrender_text(&atlas[iFont], text, buffer_view, width, height, color, size);
+  Hrender_text(&atlas[iFont], insert_linewrap(text, size, width), buffer_view, width, height, color, size);
 
 
 
@@ -399,15 +418,11 @@ void H_get_visibility(H_Element iElement, int *viz) {
 void H_set_marin(H_Element iElement, int top, int bottom, int right, int left) {
   if (iElement>arrlen(margins.bottom)) { printf("OUT OF BOUNDS MARGIN"); return; }
 
-  margins.top[iElement] = bottom;
+  margins.top[iElement] = top;
   margins.bottom[iElement] = bottom;
-  margins.right[iElement] = bottom;
-  margins.left[iElement] = bottom;
+  margins.right[iElement] = right;
+  margins.left[iElement] = left;
 }
-
-
-// TODO: check for overlapping buffer on the same layer
-
 
 
 typedef struct {
@@ -446,6 +461,13 @@ int modify_positions_to_axis() {
         components.position_x[iElement] = components.position_x[iMaster]+axis_anchors.offset_x[i];
         components.position_y[iElement] = components.position_y[iMaster]+axis_anchors.offset_y[i] + last_reserved_y;
 
+        if (components.anchor_pos[iMaster] == TOP) {
+          components.position_y[iElement] += components.heights[iMaster]-components.heights[iElement];
+        }
+        if (components.anchor_pos[iMaster] == RIGHT) {
+          components.position_x[iElement] += components.widths[iMaster]-components.widths[iElement];
+        }
+
         last_reserved_y += components.heights[iElement] + axis_anchors.seperator[i];
       }
     } else {
@@ -457,6 +479,13 @@ int modify_positions_to_axis() {
         components.position_x[iElement] = mPosx + axis_anchors.offset_x[i] + last_reserved_x;
 
         components.position_y[iElement] = mPoxy + axis_anchors.offset_y[i];
+        
+        if (components.anchor_pos[iMaster] == TOP) {
+          components.position_y[iElement] += components.heights[iMaster]-components.heights[iElement];
+        }
+        if (components.anchor_pos[iMaster] == RIGHT) {
+          components.position_x[iElement] += components.widths[iMaster]-components.widths[iElement];
+        }
 
         last_reserved_x += components.widths[iElement] + axis_anchors.seperator[i];
       }
