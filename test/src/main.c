@@ -49,6 +49,8 @@ int animate_button(H_Element button, H_Element display, H_Window window, bool *f
     return 0;
 }
 
+
+
 int main() {
 
   H_Window window = H_new_window("Calculator");
@@ -138,6 +140,7 @@ int main() {
     if (continue_signal) { continue; } 
     animate_button(button_1, result_display, window, &flag, &frame, &continue_signal, &lag);
 
+    // NOTE: to work for multiple id need a static struct with an array for each flag etc
 
 
 
