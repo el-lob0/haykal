@@ -7,6 +7,36 @@
 #include <stdio.h>
 
 
+int animate_button(H_Element button, H_Window window, bool *flag, int *frame, bool *continue_signal) {
+
+  bool fl = *flag;
+  int f2 = *frame; 
+  if (H_cursor_is_hover(button, window) && H_get_mouse_action() == GLFW_PRESS) {
+      H_set_label(button, "Hello World");
+      printf("button press \n"); fflush(stdout);
+  }
+  if (H_cursor_is_hover(button, window) && !fl) {
+      printf("hovered \n"); fflush(stdout);
+      *flag = true;
+      *frame+=4;
+  }
+  if (*frame >= 99 && H_cursor_is_hover(button, window)) { *continue_signal = true; return 1; } // return to stop function
+  if (H_cursor_is_hover(button, window) && *flag) {
+      H_set_alpha(button, 100-f2);
+      *frame+=4;
+  }
+
+  if (!H_cursor_is_hover(button, window) && *flag && *frame <= 1) {
+      *flag = false;
+      *frame = 0;
+  }
+  if (!H_cursor_is_hover(button, window) && *flag && *frame > 0) {
+      *frame-=4;
+      H_set_alpha(button, 100-f2);
+  }
+  return 0;
+}
+
 
 
 int main() {
@@ -24,32 +54,24 @@ int main() {
   H_Font newfont24 = H_add_font("/usr/share/fonts/newfont.ttf", 24);
 
 
-
-
-
   // we will set this to follow the size of the window so position has to match origin
-  H_Element main_container = H_new_box(1, 700, 100, background, 0 , 10 , 1, 0, 0, ABSOLUTE);
+  H_Element main_container = H_new_box(1, 700, 100, background, 0 , 10 , 1, 20, 20, ABSOLUTE);
+
+  H_Element result_display = H_new_label(2, "Hello World!", 0, 0, 500, 100, text, 64, newfont64);
 
 
-  H_Element result_display = H_new_label(2, "Hello World!", 100, 100, 800, 700, text, 64, newfont64);
-
-
-  H_Element button_1 = H_new_button(2, " 1", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_2 = H_new_button(2, " 2", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_3 = H_new_button(2, " 3", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_4 = H_new_button(2, " 4", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_5 = H_new_button(2, " 5", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_6 = H_new_button(2, " 6", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_7 = H_new_button(2, " 7", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_8 = H_new_button(2, " 8", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_9 = H_new_button(2, " 9", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_0 = H_new_button(2, " 0", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_equal = H_new_button(2, " =", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  H_Element button_plus = H_new_button(2, " +", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  // H_Element button_minus = H_new_button(2, " -", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  // H_Element button_times = H_new_button(2, " *", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-  // H_Element button_divide = H_new_button(2, " /", 0, 0, 100, 100, 4, text, button, 64, newfont64);
-
+  H_Element button_1 = H_new_button(2, " 1", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_2 = H_new_button(2, " 2", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_3 = H_new_button(2, " 3", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_4 = H_new_button(2, " 4", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_5 = H_new_button(2, " 5", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_6 = H_new_button(2, " 6", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_7 = H_new_button(2, " 7", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_8 = H_new_button(2, " 8", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_9 = H_new_button(2, " 9", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_0 = H_new_button(2, " 0", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_equal = H_new_button(2, " =", 0, 0, 100, 90, 10, text, button, 64, newfont64);
+  H_Element button_plus = H_new_button(2, " +", 0, 0, 100, 90, 10, text, button, 64, newfont64);
 
 
   H_Element row_1 = H_new_box(3, 500, 100, transparent, 0, 0, 0, 0, 0, ABSOLUTE);
@@ -93,12 +115,19 @@ int main() {
 
   H_monitor_resize(window.window, H_update_size);
   
+  bool continue_signal = false;
 
   while (H_main_loop_running(window)) {
 
     
     H_poll_events(); 
     H_show_frame(&window);
+
+    if (continue_signal) { continue; } 
+    animate_button(button_1, window, &flag, &frame, &continue_signal);
+
+
+
 
     H_clear_events();
   }

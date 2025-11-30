@@ -179,7 +179,6 @@ H_Axis H_create_axis(Vector vec, int master, int offset_x, int offset_y, int sep
 
 /// any element tied to another needs to do so through an axis
 void H_add_to_axis(H_Axis iVec, H_Element iElement) {
-
   arrpush(axis_anchors.aligned_elements[iVec], iElement);
 }
 
@@ -410,7 +409,7 @@ H_Element H_new_button(int layer, const char *label, int x, int y, int width, in
 
   H_Element ibox = arrlen(components.layer);
 
-  push_metadata(layer, width, ABSOLUTE, height, bg_color, 0, radius, 0, x, y, 1);
+  push_metadata(layer, width, ABSOLUTE, height, text_color, 0, radius, 0, x, y, 1);
 
   Pixel *buffer_view = nib_rectangle( bg_color, width, height);
 
@@ -420,7 +419,7 @@ H_Element H_new_button(int layer, const char *label, int x, int y, int width, in
   nib_apply_radius(buffer_view, width, height, radius);
 
   arrpush(label_array.element_label, label); arrpush(label_array.element_id, ibox);
-  arrpush(label_array.font_id, iFont); arrpush(label_array.bg_colors, ((Pixel){0.0f, 0.0f, 0.0f, 0.0f}));
+  arrpush(label_array.font_id, iFont); arrpush(label_array.bg_colors, bg_color);
 
   arrpush(margins.bottom, 0);
   arrpush(margins.top, 0);
@@ -496,6 +495,9 @@ void H_set_margin(H_Element iElement, int top, int bottom, int right, int left) 
 // for no this just edits the metadata
 void H_set_alpha(H_Element iElement, int alpha) {
   float new = (float)alpha/100;
+
+
+  // this is font color if its a button
   components.color[iElement].a = new;
   if (components.buffer[iElement] != NULL) { free(components.buffer[iElement]); }
   components.buffer[iElement] = nib_rectangle(components.color[iElement], components.widths[iElement], components.heights[iElement]);
@@ -537,25 +539,35 @@ int modify_positions_to_axis() {
     int mPosx = components.position_x[iMaster];
     int mPoxy = components.position_y[iMaster];
 
-    if (axis_anchors.vectors[i] ==  VERTICAL) {
-      int last_reserved_y = 0;
-      for (int f=0; f<arrlen(axis_anchors.aligned_elements[i]); f++) {
+    if (axis_anchors.vectors[i] == VERTICAL) {
+    // calculate total height of all aligned elements + separators
+    int total_height = 0;
+    for (int f = 0; f < arrlen(axis_anchors.aligned_elements[i]); f++) {
+        H_Element e = axis_anchors.aligned_elements[i][f];
+        total_height += components.heights[e];
+        if (f < arrlen(axis_anchors.aligned_elements[i]) - 1)
+            total_height += axis_anchors.seperator[i];
+    }
 
+    int last_reserved_y = total_height; // start from bottom
+    for (int f = 0; f < arrlen(axis_anchors.aligned_elements[i]); f++) {
         H_Element iElement = axis_anchors.aligned_elements[i][f];
 
-        components.position_x[iElement] = components.position_x[iMaster]+axis_anchors.offset_x[i];
-        components.position_y[iElement] = components.position_y[iMaster]+axis_anchors.offset_y[i] + last_reserved_y;
+        last_reserved_y -= components.heights[iElement]; // reserve space for this element
+
+        components.position_x[iElement] = components.position_x[iMaster] + axis_anchors.offset_x[i];
+        components.position_y[iElement] = components.position_y[iMaster] + axis_anchors.offset_y[i] + last_reserved_y;
 
         if (components.anchor_pos[iMaster] == TOP) {
-          components.position_y[iElement] += components.heights[iMaster]-components.heights[iElement];
+            components.position_y[iElement] += components.heights[iMaster] - components.heights[iElement];
         }
         if (components.anchor_pos[iMaster] == RIGHT) {
-          components.position_x[iElement] += components.widths[iMaster]-components.widths[iElement];
+            components.position_x[iElement] += components.widths[iMaster] - components.widths[iElement];
         }
 
-        last_reserved_y += components.heights[iElement] + axis_anchors.seperator[i];
-      }
-    } else {
+        last_reserved_y -= axis_anchors.seperator[i]; // subtract separator for next
+    }
+} else {
       int last_reserved_x = 0;
       for (int f=0; f<arrlen(axis_anchors.aligned_elements[i]); f++) {
 
@@ -651,6 +663,8 @@ int update_labels() {
     if (components.buffer[iElement] != NULL) { free(components.buffer[iElement]); }
     components.buffer[iElement] = nib_rectangle(bg_color, components.widths[iElement], components.heights[iElement]);
 
+    nib_apply_radius(components.buffer[iElement], components.widths[iElement], components.heights[iElement], components.radius[iElement]);
+
     // TODO: update buffer with new text
     Hrender_text(atlas_arr[iFont], label, components.buffer[iElement], components.widths[iElement], 
                  components.heights[iElement], components.color[iElement], fonts[iFont].size);
@@ -718,7 +732,7 @@ int H_get_mouse_button() {
 
 // CURSOR POSITION
 void cursor_callback( GLFWwindow *window, double x, double y) {
-  event_box.cursor_x = main.w - x;
+  event_box.cursor_x = x;
   event_box.cursor_y = main.h - y;
 }
 
@@ -728,24 +742,23 @@ void H_get_cursor_pos(int *x, int *y) {
 }
 
 bool H_cursor_is_hover(H_Element iElement, H_Window window) {
-  // range of the element to be hovered
-  int x_start, x_end;
-  int y_start, y_end;
+    int x_start = components.position_x[iElement];
+    int y_start = components.position_y[iElement];
+    int x_end   = x_start + components.widths[iElement];
+    int y_end   = y_start + components.heights[iElement];
 
-  x_start = components.position_x[iElement]; y_start = components.position_y[iElement];
-  x_end = components.position_x[iElement] + components.widths[iElement];
-  y_end = components.position_y[iElement] + components.heights[iElement];
   // printf("start x: %d start y: %d \n end x: %d end y: %d \n \n", x_start, y_start, x_end, y_end); fflush(stdout);
   // printf("cursor x: %d cursor y: %d \n \n \n", (int)event_box.cursor_x, (int)event_box.cursor_y); fflush(stdout);
 
-  if (x_start <= event_box.cursor_x 
-      && event_box.cursor_x <= x_end 
-      && y_start <= event_box.cursor_y
-      && event_box.cursor_y <= y_end) 
-  {
-    return true;
-  }
-  else { return false; }
+    if (x_start > x_end) { int tmp = x_start; x_start = x_end; x_end = tmp; }
+    if (y_start > y_end) { int tmp = y_start; y_start = y_end; y_end = tmp; }
+
+    if (x_start <= event_box.cursor_x && event_box.cursor_x <= x_end &&
+        y_start <= event_box.cursor_y && event_box.cursor_y <= y_end) 
+    {
+        return true;
+    }
+    return false;
 }
 
 // SCROLL
