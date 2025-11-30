@@ -299,7 +299,7 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 
   components.radius[ibox] = radius;
 
-  H_apply_radius(buf, width, height, radius);
+  nib_apply_radius(buf, width, height, radius);
 
   // my_aa(buf, width, height);
 
@@ -321,6 +321,8 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
   return ibox;
 }
 
+// TODO: padding
+
 static Font *fonts;
 static Atlas *atlas;
 
@@ -339,7 +341,7 @@ H_Font H_add_font(const char *path, int px) {
   return i;
 }
 
-// currently based on the size of the 
+// currently based on the fontsize 
 char *insert_linewrap(const char *unparsed, int char_width, int max_width) {
   int current_width = 0;
   char *target=NULL;
@@ -357,7 +359,7 @@ char *insert_linewrap(const char *unparsed, int char_width, int max_width) {
   return target;
 }
 
-
+// transparent bg
 H_Element H_new_label(int layer, const char *text, int x, int y, int width, int height, Pixel color, int size, H_Font iFont) {
   H_Element ibox = arrlen(components.layer);
 
@@ -377,6 +379,30 @@ H_Element H_new_label(int layer, const char *text, int x, int y, int width, int 
 
   return ibox;
 }
+
+
+H_Element H_new_button(int layer, const char *label, int x, int y, int width, int height, int radius, Pixel text_color, Pixel bg_color, int size, H_Font iFont) {
+  H_Element ibox = arrlen(components.layer);
+
+  push_metadata(layer, width, ABSOLUTE, height, bg_color, 0, radius, 0, x, y, 1);
+
+  Pixel *buffer_view = nib_rectangle( bg_color, width, height);
+
+
+  // TODO: make offset param 
+  Hrender_text(&atlas[iFont], insert_linewrap(label, size, width), buffer_view, width, height, text_color, size);
+
+  nib_apply_radius(buffer_view, width, height, radius);
+
+
+  components.buffer[ibox] = buffer_view;
+
+  H_update_layers(layer, ibox);
+
+  return ibox;
+}
+
+
 
 
 void H_set_position(H_Element iElement, int x, int y) {
@@ -417,7 +443,7 @@ void H_get_visibility(H_Element iElement, int *viz) {
   *viz = components.visibilty[iElement];
 }
 
-void H_set_marin(H_Element iElement, int top, int bottom, int right, int left) {
+void H_set_margin(H_Element iElement, int top, int bottom, int right, int left) {
   if (iElement>arrlen(margins.bottom)) { printf("OUT OF BOUNDS MARGIN"); return; }
 
   margins.top[iElement] = top;
@@ -604,7 +630,8 @@ typedef enum {
 typedef struct {
   double cursor_x;
   double cursor_y;
-  MouseEvent mouse_click;
+  int mouse_button;
+  int mouse_action;
   double scroll_offset_x;
   double scroll_offset_y;
   int key;
@@ -616,18 +643,17 @@ static Events event_box = {0};
 
 // MOUSE CLICK
 void mouse_callback(GLFWwindow *window, int button, int action, int mods) {
-  if (action == GLFW_PRESS) {
-    switch (button) {
-      case GLFW_MOUSE_BUTTON_LEFT: {event_box.mouse_click = LEFT_CLICK; break;}
-      case GLFW_MOUSE_BUTTON_RIGHT: {event_box.mouse_click = RIGHT_CLICK; break;}
-      case GLFW_MOUSE_BUTTON_MIDDLE: {event_box.mouse_click = WHEEL_CLICK; break;}
-    }
-  }
+  event_box.mouse_button = button;
+  event_box.mouse_action = action;
+  printf("callback"); fflush(stdout);
 }
 
-MouseEvent H_mouse_click_event(H_Window window) {
-  nib_set_mouse_click_callback(window.window, mouse_callback);
-  return event_box.mouse_click;
+int H_get_mouse_action() {
+  return event_box.mouse_action;
+}
+
+int H_get_mouse_button() {
+  return event_box.mouse_button;
 }
 
 // CURSOR POSITION
@@ -700,6 +726,15 @@ bool H_key_hold_event(GLFWwindow* window) {
 
 int H_get_key() {
   return event_box.key;
+}
+
+
+bool H_element_clicked(H_Element iElement, H_Window window) {
+    if (H_cursor_is_hover(iElement, window) && event_box.mouse_action == H_PRESS && event_box.mouse_button == H_MOUSE_LEFT) {
+        return true;
+    } else {
+      return false;
+    }
 }
 
 

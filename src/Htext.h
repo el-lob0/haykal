@@ -87,6 +87,29 @@ typedef struct {
 // ------------------ HELPERS --------------------------------
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
+
+void flip_atlas(Atlas *atlas) {
+    int w = atlas->atlas_w;
+    int h = atlas->atlas_h;
+    for (int y = 0; y < h / 2; y++) {
+        unsigned char *top = atlas->alpha + y * w;
+        unsigned char *bottom = atlas->alpha + (h - 1 - y) * w;
+
+        for (int x = 0; x < w; x++) {
+            unsigned char tmp = top[x];
+            top[x] = bottom[x];
+            bottom[x] = tmp;
+        }
+    }
+
+    // after flipping the atlas, adjust each glyph's y-coordinate
+    for (int i = 32; i < 127; i++) {
+        Glyph *g = &atlas->glyphs[i];
+        g->atlas_y = h - g->atlas_y - g->height;
+    }
+}
+
+
 Atlas Hbuild_atlas(Font *font) {
   Glyph glyph_arr[127];
 
@@ -138,6 +161,8 @@ Atlas Hbuild_atlas(Font *font) {
   memcpy(atlas.glyphs, glyph_arr, sizeof(glyph_arr));
   atlas.count = 127 - 32;
 
+  flip_atlas(&atlas);
+
   return atlas;
 }
 
@@ -151,31 +176,11 @@ int Htext_width(Atlas *atlas, const char *text) {
   return w;
 }
 
-void flip_atlas(Atlas *atlas) {
-    int w = atlas->atlas_w;
-    int h = atlas->atlas_h;
-    for (int y = 0; y < h / 2; y++) {
-        unsigned char *top = atlas->alpha + y * w;
-        unsigned char *bottom = atlas->alpha + (h - 1 - y) * w;
 
-        for (int x = 0; x < w; x++) {
-            unsigned char tmp = top[x];
-            top[x] = bottom[x];
-            bottom[x] = tmp;
-        }
-    }
-
-    // after flipping the atlas, adjust each glyph's y-coordinate
-    for (int i = 32; i < 127; i++) {
-        Glyph *g = &atlas->glyphs[i];
-        g->atlas_y = h - g->atlas_y - g->height;
-    }
-}
 
 
 
 void Hrender_text(Atlas *atlas, const char *text, Pixel *buffer, int buffer_w, int buffer_h, Pixel color, int font_size) {
-    flip_atlas(atlas);
     int x = 0, y = buffer_h-font_size;
 
     int baseline = 0;
@@ -198,11 +203,13 @@ void Hrender_text(Atlas *atlas, const char *text, Pixel *buffer, int buffer_w, i
                 if (dst_x < 0 || dst_x >= buffer_w || dst_y < 0 || dst_y >= buffer_h) continue;
 
                 float a = atlas->alpha[(g->atlas_y + gy) * atlas->atlas_w + (g->atlas_x + gx)] / 255.0f;
-                Pixel *p = &buffer[dst_y * buffer_w + dst_x];
-                p->r = color.r * a;
-                p->g = color.g * a;
-                p->b = color.b * a;
-                p->a = a;
+                Pixel *destination = &buffer[dst_y * buffer_w + dst_x];
+                if (a != 0.0f) {
+                  destination->r = color.r * a + destination->r * (1-a);
+                  destination->g = color.g * a + destination->g * (1-a);
+                  destination->b = color.b * a + destination->b * (1-a);
+                  destination->a = a + destination->a*(1-a);
+                }
             }
         }
 

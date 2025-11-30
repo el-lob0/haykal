@@ -23,6 +23,7 @@ H_Window H_new_window(const char *title) {
   nib_set_key_callback(window.window, key_callback);
   glfwSetScrollCallback(window.window, scroll_callback);
   nib_set_cursor_position_callback(window.window, cursor_callback);
+  nib_set_mouse_click_callback(window.window, mouse_callback);
 
   window.buffer_h = 2000; window.buffer_w = 2000;
 

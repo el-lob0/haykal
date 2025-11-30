@@ -27,6 +27,8 @@ typedef struct {
 
 void H_add_margin(H_Element iElement, int top, int bottom, int left, int right);
 
+void H_set_margin(H_Element iElement, int top, int bottom, int right, int left);
+
 #define H_monitor_resize(win, func) nib_read_window_size(win, func)
 
 H_Window H_new_window(const char *title);
@@ -41,6 +43,7 @@ void H_pause_until_event();
 
 int H_main_loop_running(H_Window window);
 
+bool H_element_clicked(H_Element iElement, H_Window window);
 
 #define H_Color Pixel
 
@@ -248,12 +251,19 @@ H_Element H_new_label(int layer, const char *text, int x, int y, int width, int 
 #define H_KEY_MENU             GLFW_KEY_MENU
 #define H_KEY_LAST             GLFW_KEY_MENU
 
+#define H_PRESS  1
+#define H_RELEASE  GLFW_RELEASE
+
+#define H_MOUSE_LEFT GLFW_MOUSE_BUTTON_LEFT
+#define H_MOUSE_RIGHT GLFW_MOUSE_BUTTON_RIGHT
+#define H_MOUSE_MIDDLE GLFW_MOUSE_BUTTON_MIDDLE
 
 
 typedef enum {
   LEFT_CLICK,
   RIGHT_CLICK,
   WHEEL_CLICK,
+  NO_CLICK,
 } MouseEvent;
 
 MouseEvent H_mouse_click_event(H_Window window);
@@ -270,8 +280,15 @@ bool H_key_hold_event(GLFWwindow* window);
 
 int H_get_key();
 
+int H_get_mouse_action();
+
+int H_get_mouse_button();
+
 
 H_Color H_new_color(const char *hex);
+
+
+H_Element H_new_button(int layer, const char *label, int x, int y, int width, int height, int radius, Pixel text_color, Pixel bg_color, int size, H_Font iFont); 
 
 
 #endif 
