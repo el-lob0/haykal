@@ -55,6 +55,8 @@ typedef struct {
 typedef struct {
   H_Element *element_id;
   const char **element_label;
+  H_Font *font_id;
+  H_Color *bg_colors;
 } Labels;
 
 static Labels label_array = { 0 };
@@ -111,6 +113,8 @@ void haykal_init_components(H_Window window, int initial_capacity) {
 
     arrsetcap(label_array.element_id, initial_capacity);
     arrsetcap(label_array.element_label, initial_capacity);
+    arrsetcap(label_array.font_id, initial_capacity);
+    arrsetcap(label_array.bg_colors, initial_capacity);
 }
 
 void init_window_bg(H_Window window, Pixel color) {
@@ -175,6 +179,7 @@ H_Axis H_create_axis(Vector vec, int master, int offset_x, int offset_y, int sep
 
 /// any element tied to another needs to do so through an axis
 void H_add_to_axis(H_Axis iVec, H_Element iElement) {
+
   arrpush(axis_anchors.aligned_elements[iVec], iElement);
 }
 
@@ -189,7 +194,6 @@ Pixel H_sample_nn(Pixel *buf, int w, int h, float x, float y) {
 }
 
 void H_apply_radius(Pixel *src, int w, int h, int radius) {
-  if (radius <= 0) { printf("Invalid OR 0 radius"); return; }
 
   float r = radius/100.0f; // percentage becomes a 0 to 1 float
 
@@ -335,21 +339,26 @@ H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, in
 // TODO: padding
 
 static Font *fonts;
-static Atlas *atlas;
+static Atlas *atlas_arr;
 
 
 H_Font H_add_font(const char *path, int px) {
-  H_Font i = arrlen(fonts);
-  
-  Font new_font = {0};
-  Atlas new_atlas = {0};
-  if (Hfont_init(&new_font, path, px)) {
-    new_atlas = Hbuild_atlas(&new_font);
-  }
-  arrpush(fonts, new_font);
-  arrpush(atlas, new_atlas);
+    H_Font i = arrlen(fonts);
 
-  return i;
+    // create a new Font
+    Font font = {0};
+    if (!Hfont_init(&font, path, px)) {
+        return -1;
+    }
+
+    // build atlas
+    Atlas a = Hbuild_atlas(&font);
+
+    // push into dynamic arrays
+    arrpush(fonts, font);
+    arrpush(atlas_arr, a);
+
+    return i;
 }
 
 // currently based on the fontsize 
@@ -379,9 +388,14 @@ H_Element H_new_label(int layer, const char *text, int x, int y, int width, int 
   Pixel *buffer_view = nib_init_buffer(width, height);
 
   // draws text to buffer
-  Hrender_text(&atlas[iFont], insert_linewrap(text, size, width), buffer_view, width, height, color, size);
+  Hrender_text(atlas_arr[iFont], insert_linewrap(text, size, width), buffer_view, width, height, color, size);
 
-  arrpush(label_array.element_label, text); arrpush(label_array.element_id, ibox);
+  arrpush(label_array.element_label, text); arrpush(label_array.element_id, ibox); arrpush(label_array.font_id, iFont); arrpush(label_array.bg_colors, ((Pixel){0.0f, 0.0f, 0.0f, 0.0f}));
+
+  arrpush(margins.bottom, 0);
+  arrpush(margins.top, 0);
+  arrpush(margins.right, 0);
+  arrpush(margins.left, 0);
 
   components.buffer[ibox] = buffer_view;
 
@@ -392,6 +406,8 @@ H_Element H_new_label(int layer, const char *text, int x, int y, int width, int 
 
 
 H_Element H_new_button(int layer, const char *label, int x, int y, int width, int height, int radius, Pixel text_color, Pixel bg_color, int size, H_Font iFont) {
+  printf("%s \n", label); fflush(stdout);
+
   H_Element ibox = arrlen(components.layer);
 
   push_metadata(layer, width, ABSOLUTE, height, bg_color, 0, radius, 0, x, y, 1);
@@ -399,11 +415,18 @@ H_Element H_new_button(int layer, const char *label, int x, int y, int width, in
   Pixel *buffer_view = nib_rectangle( bg_color, width, height);
 
   // TODO: make offset param 
-  Hrender_text(&atlas[iFont], insert_linewrap(label, size, width), buffer_view, width, height, text_color, size);
+  Hrender_text(atlas_arr[iFont], insert_linewrap(label, size, width), buffer_view, width, height, text_color, size);
 
   nib_apply_radius(buffer_view, width, height, radius);
 
   arrpush(label_array.element_label, label); arrpush(label_array.element_id, ibox);
+  arrpush(label_array.font_id, iFont); arrpush(label_array.bg_colors, ((Pixel){0.0f, 0.0f, 0.0f, 0.0f}));
+
+  arrpush(margins.bottom, 0);
+  arrpush(margins.top, 0);
+  arrpush(margins.right, 0);
+  arrpush(margins.left, 0);
+
 
   components.buffer[ibox] = buffer_view;
 
@@ -454,7 +477,11 @@ void H_get_visibility(H_Element iElement, int *viz) {
 }
 
 void H_set_label(H_Element iElement, const char *label) {
-
+  for (int i=0; i<arrlen(label_array.font_id); i++) {
+    if (label_array.element_id[i] == iElement) {
+      label_array.element_label[i] = label;
+    }
+  }
 }
 
 void H_set_margin(H_Element iElement, int top, int bottom, int right, int left) {
@@ -616,15 +643,17 @@ int anchor_master() {
 
 int update_labels() {
   for (int i=0; i<arrlen(label_array.element_id); i++) {
-    int iElement = label_array.element_id[i];
+    H_Element iElement = label_array.element_id[i];
+    H_Font iFont = label_array.font_id[i];
+    H_Color bg_color = label_array.bg_colors[i];
     const char *label = label_array.element_label[i];
 
-    if (components.buffer[i] != NULL) { free(components.buffer[i]); }
-    components.buffer[i] = nib_rectangle(components.color[i], components.widths[i], components.heights[i]);
+    if (components.buffer[iElement] != NULL) { free(components.buffer[iElement]); }
+    components.buffer[iElement] = nib_rectangle(bg_color, components.widths[iElement], components.heights[iElement]);
 
     // TODO: update buffer with new text
-    // Hrender_text(&atlas[], label, components.buffer[i], components.widths[i], 
-                 // components.heights[i], components.color[i], 64);
+    Hrender_text(atlas_arr[iFont], label, components.buffer[iElement], components.widths[iElement], 
+                 components.heights[iElement], components.color[iElement], fonts[iFont].size);
   }
   return 0;
 }
@@ -814,6 +843,7 @@ int *H_draw_main_buffer(H_Window pWindow) {
 
   components.buffer[0] = nib_rectangle(components.color[0], main.w, main.h);
 
+  update_labels();
   anchor_master();
   apply_margins();
   modify_positions_to_axis();
