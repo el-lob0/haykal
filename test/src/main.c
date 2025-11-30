@@ -46,19 +46,44 @@ int main() {
   H_add_to_axis(axis_the_first, box2);
 
 
+  int frame = 0;
+
+  bool flag = false;
 
   H_monitor_resize(window.window, H_update_size);
   
 
   while (H_main_loop_running(window)) {
 
-    nib_poll_events();
+    
+    H_poll_events(); 
     H_show_frame(&window);
 
-    if (H_cursor_is_hover(button, window) && H_get_mouse_action() == H_PRESS) {
-      printf("button clicked"); fflush(stdout);
+    if (H_cursor_is_hover(box1, window) && H_get_mouse_action() == GLFW_PRESS) {
+      printf("button press \n"); fflush(stdout);
     }
+    if (H_cursor_is_hover(box1, window) && !flag) {
+      printf("hovered \n"); fflush(stdout);
+      flag = true;
+      frame+=4;
+    }
+    if (frame >= 99 && H_cursor_is_hover(box1, window)) { continue; }
+    if (H_cursor_is_hover(box1, window) && flag) {
+      H_set_alpha(box1, 100-frame);
+      frame+=4;
+    }
+
+    if (!H_cursor_is_hover(box1, window) && flag && frame <= 1) {
+      flag = false;
+      frame = 0;
+    }
+    if (!H_cursor_is_hover(box1, window) && flag && frame > 0) {
+      frame-=4;
+      H_set_alpha(box1, 100-frame);
+    }
+    H_clear_events();
   }
+
 
   return 0;
 }

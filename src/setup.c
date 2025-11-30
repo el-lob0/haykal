@@ -52,6 +52,13 @@ typedef struct {
   int *seperator;
 } Axis;
 
+typedef struct {
+  H_Element *element_id;
+  const char **element_label;
+} Labels;
+
+static Labels label_array = { 0 };
+
 static Axis axis_anchors = { 0 };
 
 static Margin margins = {0};
@@ -101,6 +108,9 @@ void haykal_init_components(H_Window window, int initial_capacity) {
     arrsetcap(axis_anchors.seperator, initial_capacity);
 
     arrsetcap(fpaths.paths, initial_capacity);
+
+    arrsetcap(label_array.element_id, initial_capacity);
+    arrsetcap(label_array.element_label, initial_capacity);
 }
 
 void init_window_bg(H_Window window, Pixel color) {
@@ -280,6 +290,7 @@ void my_aa(Pixel *src, int w, int h) {
 
 
 
+
 /// New box is assigned to a layer, given a position and a size.
 /// Visibility defaults to 1
 H_Element H_new_box(int layer, int width, int height, Pixel color, int angle, int radius, int feather, int x, int y, Anchor anchor ) {
@@ -367,11 +378,10 @@ H_Element H_new_label(int layer, const char *text, int x, int y, int width, int 
 
   Pixel *buffer_view = nib_init_buffer(width, height);
 
-
   // draws text to buffer
   Hrender_text(&atlas[iFont], insert_linewrap(text, size, width), buffer_view, width, height, color, size);
 
-
+  arrpush(label_array.element_label, text); arrpush(label_array.element_id, ibox);
 
   components.buffer[ibox] = buffer_view;
 
@@ -388,12 +398,12 @@ H_Element H_new_button(int layer, const char *label, int x, int y, int width, in
 
   Pixel *buffer_view = nib_rectangle( bg_color, width, height);
 
-
   // TODO: make offset param 
   Hrender_text(&atlas[iFont], insert_linewrap(label, size, width), buffer_view, width, height, text_color, size);
 
   nib_apply_radius(buffer_view, width, height, radius);
 
+  arrpush(label_array.element_label, label); arrpush(label_array.element_id, ibox);
 
   components.buffer[ibox] = buffer_view;
 
@@ -443,6 +453,10 @@ void H_get_visibility(H_Element iElement, int *viz) {
   *viz = components.visibilty[iElement];
 }
 
+void H_set_label(H_Element iElement, const char *label) {
+
+}
+
 void H_set_margin(H_Element iElement, int top, int bottom, int right, int left) {
   if (iElement>arrlen(margins.bottom)) { printf("OUT OF BOUNDS MARGIN"); return; }
 
@@ -456,6 +470,8 @@ void H_set_margin(H_Element iElement, int top, int bottom, int right, int left) 
 void H_set_alpha(H_Element iElement, int alpha) {
   float new = (float)alpha/100;
   components.color[iElement].a = new;
+  if (components.buffer[iElement] != NULL) { free(components.buffer[iElement]); }
+  components.buffer[iElement] = nib_rectangle(components.color[iElement], components.widths[iElement], components.heights[iElement]);
 }
 
 typedef struct {
@@ -598,6 +614,21 @@ int anchor_master() {
   return 0;
 }
 
+int update_labels() {
+  for (int i=0; i<arrlen(label_array.element_id); i++) {
+    int iElement = label_array.element_id[i];
+    const char *label = label_array.element_label[i];
+
+    if (components.buffer[i] != NULL) { free(components.buffer[i]); }
+    components.buffer[i] = nib_rectangle(components.color[i], components.widths[i], components.heights[i]);
+
+    // TODO: update buffer with new text
+    // Hrender_text(&atlas[], label, components.buffer[i], components.widths[i], 
+                 // components.heights[i], components.color[i], 64);
+  }
+  return 0;
+}
+
 int apply_margins() { 
     for (int i = 0; i < arrlen(margins.top); i++) {
         components.position_x[i] += margins.left[i];
@@ -658,8 +689,8 @@ int H_get_mouse_button() {
 
 // CURSOR POSITION
 void cursor_callback( GLFWwindow *window, double x, double y) {
-  event_box.cursor_x = x;
-  event_box.cursor_y = y;
+  event_box.cursor_x = main.w - x;
+  event_box.cursor_y = main.h - y;
 }
 
 void H_get_cursor_pos(int *x, int *y) {
@@ -675,6 +706,8 @@ bool H_cursor_is_hover(H_Element iElement, H_Window window) {
   x_start = components.position_x[iElement]; y_start = components.position_y[iElement];
   x_end = components.position_x[iElement] + components.widths[iElement];
   y_end = components.position_y[iElement] + components.heights[iElement];
+  // printf("start x: %d start y: %d \n end x: %d end y: %d \n \n", x_start, y_start, x_end, y_end); fflush(stdout);
+  // printf("cursor x: %d cursor y: %d \n \n \n", (int)event_box.cursor_x, (int)event_box.cursor_y); fflush(stdout);
 
   if (x_start <= event_box.cursor_x 
       && event_box.cursor_x <= x_end 
@@ -698,6 +731,11 @@ void H_get_scroll_event(H_Window window, int *xoffset, int *yoffset) {
   *yoffset = event_box.scroll_offset_y;
 }
 
+void H_clear_events() {
+  event_box.mouse_action = 0;
+  event_box.scroll_offset_x = 0;
+  event_box.scroll_offset_y = 0;
+}
 
 // KEYBOARD
 

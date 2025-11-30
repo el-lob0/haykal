@@ -96,6 +96,15 @@ H_Font H_add_font(const char *path, int px);
 
 H_Element H_new_label(int layer, const char *text, int x, int y, int width, int height, Pixel color, int size, H_Font iFont);
 
+void H_set_alpha(H_Element iElement, int alpha);
+
+ 
+#define  H_poll_events() glfwPollEvents()
+
+void H_clear_events();
+
+
+void H_get_position(H_Element iElement, int *x, int *y);
 
 // heh 
 #define H_KEY_SPACE	GLFW_KEY_SPACE   
