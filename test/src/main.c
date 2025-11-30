@@ -7,17 +7,21 @@
 #include <stdio.h>
 
 
-int animate_button(H_Element button, H_Window window, bool *flag, int *frame, bool *continue_signal) {
+int animate_button(H_Element button, H_Element display, H_Window window, bool *flag, int *frame, bool *continue_signal, bool *lag) {
 
     int f = *frame;
 
     if (H_cursor_is_hover(button, window) && H_get_mouse_action() == GLFW_PRESS) {
-        H_set_label(button, "Hello World");
-        printf("button press \n"); fflush(stdout);
+        H_set_label(display, "Result !");
+        H_set_alpha(button, 10);
+        *lag = true;
+    }
+    if (*lag && H_get_mouse_action() == GLFW_RELEASE) {
+      H_set_alpha(button, 100-f);
     }
 
+
     if (H_cursor_is_hover(button, window) && !*flag) {
-        printf("hovered \n"); fflush(stdout);
         *flag = true;
         *frame += 4;
     }
@@ -118,6 +122,7 @@ int main() {
   int frame = 0;
 
   bool flag = false;
+  bool lag = false;
 
   H_monitor_resize(window.window, H_update_size);
   
@@ -126,12 +131,12 @@ int main() {
   while (H_main_loop_running(window)) {
 
     
-    continue_signal = false;
+    continue_signal = false; // !!!!!
     H_poll_events(); 
     H_show_frame(&window);
 
     if (continue_signal) { continue; } 
-    animate_button(button_1, window, &flag, &frame, &continue_signal);
+    animate_button(button_1, result_display, window, &flag, &frame, &continue_signal, &lag);
 
 
 
