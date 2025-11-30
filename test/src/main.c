@@ -9,35 +9,41 @@
 
 int animate_button(H_Element button, H_Window window, bool *flag, int *frame, bool *continue_signal) {
 
-  bool fl = *flag;
-  int f2 = *frame; 
-  if (H_cursor_is_hover(button, window) && H_get_mouse_action() == GLFW_PRESS) {
-      H_set_label(button, "Hello World");
-      printf("button press \n"); fflush(stdout);
-  }
-  if (H_cursor_is_hover(button, window) && !fl) {
-      printf("hovered \n"); fflush(stdout);
-      *flag = true;
-      *frame+=4;
-  }
-  if (*frame >= 99 && H_cursor_is_hover(button, window)) { *continue_signal = true; return 1; } // return to stop function
-  if (H_cursor_is_hover(button, window) && *flag) {
-      H_set_alpha(button, 100-f2);
-      *frame+=4;
-  }
+    int f = *frame;
 
-  if (!H_cursor_is_hover(button, window) && *flag && *frame <= 1) {
-      *flag = false;
-      *frame = 0;
-  }
-  if (!H_cursor_is_hover(button, window) && *flag && *frame > 0) {
-      *frame-=4;
-      H_set_alpha(button, 100-f2);
-  }
-  return 0;
+    if (H_cursor_is_hover(button, window) && H_get_mouse_action() == GLFW_PRESS) {
+        H_set_label(button, "Hello World");
+        printf("button press \n"); fflush(stdout);
+    }
+
+    if (H_cursor_is_hover(button, window) && !*flag) {
+        printf("hovered \n"); fflush(stdout);
+        *flag = true;
+        *frame += 4;
+    }
+
+    if (*frame >= 45 && H_cursor_is_hover(button, window)) {
+        *continue_signal = true;
+        return 1;
+    }
+
+    if (H_cursor_is_hover(button, window) && *flag) {
+        H_set_alpha(button, 100 - f);
+        *frame += 4;
+    }
+
+    if (!H_cursor_is_hover(button, window) && *flag && *frame <= 1) {
+        *flag = false;
+        *frame = 0;
+    }
+
+    if (!H_cursor_is_hover(button, window) && *flag && *frame > 0) {
+        *frame -= 4;
+        H_set_alpha(button, 100 - f);
+    }
+
+    return 0;
 }
-
-
 
 int main() {
 
@@ -120,6 +126,7 @@ int main() {
   while (H_main_loop_running(window)) {
 
     
+    continue_signal = false;
     H_poll_events(); 
     H_show_frame(&window);
 

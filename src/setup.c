@@ -495,8 +495,15 @@ void H_set_margin(H_Element iElement, int top, int bottom, int right, int left) 
 // for no this just edits the metadata
 void H_set_alpha(H_Element iElement, int alpha) {
   float new = (float)alpha/100;
+  bool exit = false;
+  for (int i=0; i<arrlen(label_array.bg_colors) ; i++) {
+    if (label_array.element_id[i]==iElement) {
+      label_array.bg_colors[i].a = new;
+      exit = true;
+    }
+  }
 
-
+  if (exit) {return;}
   // this is font color if its a button
   components.color[iElement].a = new;
   if (components.buffer[iElement] != NULL) { free(components.buffer[iElement]); }
