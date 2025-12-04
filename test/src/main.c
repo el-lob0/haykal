@@ -1,10 +1,7 @@
-// #include "../include/haykal.h"
-// #include "../../../include/nib.h"
 #define GLAD_GL_IMPLEMENTATION
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <haykal.h>
-#include <stdio.h>
 
 
 int animate_button(H_Element button, H_Element display, H_Window window, bool *flag, int *frame, bool *continue_signal, bool *lag) {
@@ -150,28 +147,6 @@ int main() {
 
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
