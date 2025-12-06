@@ -19,6 +19,13 @@ Layers, easy relative and absolute positions, layer clipping.
   
 
 # TODO (Later)
-- Fix rectangle radius
-- simple anti aliasing
-- 
+
+* [ ] wrap glfw input fully (kb layout kb input, cursor image, drag&drop, unicode or utf kb input, scroll event, destroy cursor, clipboard, time)  
+(not to forget to edit freetype to utf/unifont accordingly)  
+* [ ] an input template and scrollview template
+* [ ] slap error checks everywhere (especially for calling of functions on incompatible objects)
+* [ ] visual fixes: proper text wrapping, anti aliasing, borders, blur
+* [ ] image and image sequence elements
+* [ ] color setters
+* [ ] ... 
+
