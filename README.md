@@ -12,7 +12,7 @@ often results in having to use some convoluted techniques in order to implement 
 
 # Concept
   
-Layers, easy relative and absolute positions, layer clipping.  
+Layers, easy relative and absolute positions, customizability.  
   
   
 
